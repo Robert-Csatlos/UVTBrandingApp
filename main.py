@@ -12,4 +12,4 @@ def read_root():
 
 @app.get("/api/message")
 def get_message():
-    return {"message": "API test."}
+    return {"message": "API test. "}
