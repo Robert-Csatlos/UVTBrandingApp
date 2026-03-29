@@ -1,15 +1,5 @@
-from fastapi import FastAPI
-from fastapi.responses import FileResponse
-from fastapi.staticfiles import StaticFiles # 1. Import StaticFiles
+import uvicorn
 
-app = FastAPI()
-
-app.mount("/static", StaticFiles(directory="static"), name="static")
-
-@app.get("/")
-def read_root():
-    return FileResponse("index.html")
-
-@app.get("/api/message")
-def get_message():
-    return {"message": "API test. "}
+if __name__ == "__main__":
+    print("Running the server for UVT Branding App...")
+    uvicorn.run("api:app", host="127.0.0.1", port=8000, reload=True);
