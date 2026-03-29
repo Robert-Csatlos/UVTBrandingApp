@@ -15,12 +15,24 @@ async function loadInventory() {
             return;
         }
 
-        let html = '<ul>';
+        let html = '<ul style="list-style-type: none; padding: 0;">';
         materials.forEach(item => {
-            // Ensure these property names match your models.py (name and quantity)
-            html += `<li><strong>${item.name}</strong> (Qty: ${item.quantity})</li>`;
+            // Adding all fields from the Inventory model
+            html += `
+                <li>
+                    <strong>${item.name}</strong> (Qty: ${item.quantity})<br>
+                    <small>
+                        <strong>Code:</strong> ${item.inventory_code} | 
+                        <strong>Category:</strong> ${item.category} | 
+                        <strong>Status:</strong> ${item.status}<br>
+                        <strong>Location:</strong> ${item.location} | 
+                        <strong>Responsible:</strong> ${item.responsible_person}
+                    </small>
+                </li>`;
         });
         html += '</ul>';
+
+displayElement.innerHTML = html;
 
         displayElement.innerHTML = html;
 
