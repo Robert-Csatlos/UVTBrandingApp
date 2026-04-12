@@ -24,7 +24,7 @@
 
 ![!! Image githubClone.png not found in /images/ !!](/images/githubClone.png "Click on the 2 squares.")
 
-* Open up the source controll.
+* Open up the source controll in VSCode clocking the following icon:
 
 ![!! Image sourceControll.png not found in /images/ !!](/images/sourceControll.png "clone the repo and open it")
 
