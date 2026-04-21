@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Simplistic Site</title>
+        <link rel="stylesheet" href="/static/login.css">
+    </head>
+    <body>
+        <div class="container">
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider">
+                        <span class="slider-knob"></span>
+                    </span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+
+            <div id="home-view">
+                <h1 data-i18n="greeting">Welcome to my Simplistic Site</h1>
+                <button id="login-trigger-btn" class="login-main-btn">Login</button>
+            </div>
+
+            <div id="login-view" style="display: none;">
+                <h2 data-i18n="login_title">Sign In</h2>
+                <div class="input-group">
+                    <input type="text" placeholder="Username" id="username">
+                    <input type="password" placeholder="Password" id="password">
+                </div>
+
+                <div class="button-group-vertical">
+                    <button class="login-submit">Login</button>
+                    <button class="uvt-btn">E-UVT Log-in</button>
+                    <button id="back-btn" class="back-link">← Back</button>
+                </div>
+            </div>
+        </div>
+
+        <script src="/static/langAndDarkMode.js"></script>
+        <script src="/static/login.js"></script>
+    </body>
+</html>

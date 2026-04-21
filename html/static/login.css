@@ -1,0 +1,267 @@
+/* --- Variables --- */
+:root {
+    --bg-color: #f8f9fa;      /* Soft white */
+    --text-color: #212529;    /* Deep charcoal */
+    --accent-color: #3b82f6;  /* Modern Blue */
+    --card-bg: #ffffff;
+    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+}
+
+[data-theme="dark"] {
+    --bg-color: #0f172a;      /* Very dark blue-grey */
+    --text-color: #f1f5f9;    /* Off-white text */
+    --accent-color: #60a5fa;  /* Lighter blue for dark mode */
+    --card-bg: #1e293b;       /* Dark slate card */
+    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+}
+
+/* --- Global Reset --- */
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-color);
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    transition: background-color 0.4s ease, color 0.4s ease;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    padding: 20px;
+}
+
+/* --- Container Styling --- */
+.container {
+    background-color: var(--card-bg);
+    padding: 40px;
+    border-radius: 16px;
+    box-shadow: var(--shadow);
+    text-align: center;
+    max-width: 500px;
+    width: 100%;
+    transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    position: relative; /* Required for absolute child */
+    overflow: hidden;
+}
+
+.top-controls {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+h1 {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    font-weight: 800;
+}
+
+p {
+    margin-bottom: 2rem;
+    line-height: 1.6;
+    opacity: 0.8;
+}
+
+/* --- Interactive Switch --- */
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 45px;
+    height: 24px;
+}
+
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #ccc;
+    transition: .4s;
+    border-radius: 34px;
+}
+
+.slider:before {
+    position: absolute;
+    content: "";
+    height: 18px; width: 18px;
+    left: 3px; bottom: 3px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+}
+
+input:checked + .slider { background-color: var(--accent-color); }
+input:checked + .slider:before { transform: translateX(21px); }
+
+/* --- Flag Button --- */
+.flag-btn {
+    background: none;
+    padding: 0;
+    font-size: 1.5rem;
+    filter: none;
+}
+.flag-btn:hover { transform: scale(1.2); filter: none; }
+
+/* --- Login Form Styling --- */
+.login-main-btn {
+    width: 100%;
+    max-width: 200px;
+    margin-top: 10px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin: 20px 0;
+}
+
+.input-group input {
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #ddd;
+    background: var(--bg-color);
+    color: var(--text-color);
+}
+
+.button-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.uvt-btn {
+    background-color: #2563eb; /* UVT Blue */
+}
+
+.back-link {
+    background: none;
+    color: var(--text-color);
+    font-size: 0.8rem;
+    opacity: 0.6;
+}
+
+/* --- Smooth Transitions --- */
+.fade-in {
+    animation: fadeInSlide 0.5s ease-out forwards;
+}
+
+@keyframes fadeInSlide {
+    from {
+        opacity: 0;
+        transform: translateY(15px) scale(0.98);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Ensure the views start hidden and ready for animation */
+#home-view, #login-view {
+    will-change: opacity, transform;
+}
+
+/* --- Interactive Switch with Icons --- */
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 54px; /* Slightly wider to fit icons */
+    height: 28px;
+}
+
+.theme-switch input { opacity: 0; width: 0; height: 0; }
+
+.slider {
+    position: absolute;
+    cursor: pointer;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background-color: #cbd5e1; /* Light mode track */
+    transition: .4s;
+    border-radius: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 6px;
+}
+
+/* Sun and Moon Icons */
+.slider::before {
+    content: "☀️";
+    font-size: 14px;
+    z-index: 1;
+}
+
+.slider::after {
+    content: "🌙";
+    font-size: 14px;
+    z-index: 1;
+}
+
+/* The Moving Knob */
+.slider-knob {
+    position: absolute;
+    height: 20px;
+    width: 20px;
+    left: 4px;
+    bottom: 4px;
+    background-color: white;
+    transition: .4s;
+    border-radius: 50%;
+    z-index: 2; /* Sits above the emojis */
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+input:checked + .slider {
+    background-color: #334155; /* Dark mode track */
+}
+
+input:checked + .slider .slider-knob {
+    transform: translateX(26px);
+}
+
+/* --- Buttons --- */
+.button-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+button {
+    background-color: var(--accent-color);
+    color: white; /* Keep button text white for contrast */
+    border: none;
+    padding: 12px 24px;
+    border-radius: 10px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.95rem;
+    transition: transform 0.2s ease, filter 0.2s ease;
+}
+
+button:hover {
+    transform: translateY(-2px);
+    filter: brightness(1.1);
+}
+
+button:active {
+    transform: translateY(0);
+}
+
+/* --- Mobile Responsiveness --- */
+@media (max-width: 480px) {
+    .button-group {
+        flex-direction: column;
+    }
+    .container {
+        padding: 24px;
+    }
+}

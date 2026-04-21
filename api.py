@@ -14,7 +14,7 @@ app.mount("/static", StaticFiles(directory="html/static"), name="static")
 
 @app.get("/")
 def serve_home():
-    return FileResponse("html/index.html")
+    return FileResponse("html/login.html")
 
 def get_db():
     db = SessionLocal()
