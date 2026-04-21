@@ -67,10 +67,12 @@ body {
     height: 28px;
 }
 
-.theme-switch input {
+.theme-switch input:not(:checked) + .slider .moon-icon {
     opacity: 0;
-    width: 0;
-    height: 0;
+}
+
+.theme-switch input:checked + .slider .sun-icon {
+    opacity: 0;
 }
 
 .slider {
@@ -88,10 +90,11 @@ body {
     transform: translateY(-50%);
     font-size: 13px;
     z-index: 1;
-    pointer-events: none; /* Allows clicking "through" the emoji */
+    pointer-events: none;
+    transition: opacity 0.3s ease;
 }
-.sun-icon { left: 8px; }
-.moon-icon { right: 8px; }
+.sun-icon { right: 8px; }
+.moon-icon { left: 8px; }
 
 /* The Moving Knob */
 .slider-knob {
@@ -104,14 +107,13 @@ body {
     border-radius: 50%;
     transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 2; /* Sits on top of emojis */
+    z-index: 2; 
 }
 
 input:checked + .slider {
     background-color: #334155;
 }
 
-/* Only the knob moves. The .sun-icon and .moon-icon stay pinned. */
 input:checked + .slider .slider-knob {
     transform: translateX(26px);
 }
@@ -235,5 +237,84 @@ button:not(.flag-btn):active {
     .top-controls {
         top: 15px;
         right: 15px;
+    }
+}
+
+.error-popup {
+    position: absolute;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background-color: #ef4444; /* Red error color */
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 100;
+    animation: fadeInSlide 0.3s ease-out forwards;
+}
+
+.close-error-btn {
+    background: none !important;
+    border: none;
+    color: white;
+    font-size: 1.5rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+}
+
+.close-error-btn:hover {
+    transform: scale(1.1) !important;
+    filter: brightness(0.9);
+}
+
+.toast-error {
+    position: fixed;       /* Floats relative to the screen */
+    top: 20px;             /* 20px from the top */
+    right: 20px;           /* 20px from the right */
+    background-color: #ef4444; 
+    color: white;
+    padding: 12px 20px;
+    border-radius: 8px;
+    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    z-index: 9999;         /* Ensures it's always on top */
+    font-size: 0.95rem;
+    font-weight: 500;
+    animation: slideInRight 0.3s ease-out forwards;
+}
+
+.close-toast-btn {
+    background: none !important;
+    border: none;
+    color: white;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 0;
+    line-height: 1;
+    opacity: 0.8;
+    transition: opacity 0.2s, transform 0.2s !important;
+}
+
+.close-toast-btn:hover {
+    opacity: 1;
+    transform: scale(1.1) !important;
+}
+
+/* Custom animation for the corner popup */
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(50px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
     }
 }

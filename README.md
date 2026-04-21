@@ -56,9 +56,14 @@ py -m venv venv
 .\venv\Scripts\activate
 ```
 
+* Uninstall the python libraries:
+```
+pip uninstall passlib -y
+```
+
 * Install the python libraries:
 ```
-pip install fastapi uvicorn sqlalchemy databases 'pydantic[email]'
+pip install fastapi uvicorn sqlalchemy databases 'pydantic[email]' "passlib[bcrypt]" -y
 ```
 
 ### Now just run the main.py with the following command

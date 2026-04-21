@@ -7,13 +7,18 @@
         <link rel="stylesheet" href="/static/login.css">
     </head>
     <body>
+        <div id="toast-error" class="toast-error" style="display: none;">
+            <span>Invalid username or password!</span>
+            <button id="close-toast-btn" class="close-toast-btn">&times;</button>
+        </div>
+
         <div class="container">
             <div class="top-controls">
                 <label class="theme-switch">
                     <input type="checkbox" id="theme-toggle">
                     <span class="slider">
-                        <span class="sun-icon">☀️</span>
                         <span class="moon-icon">🌙</span>
+                        <span class="sun-icon">☀️</span>
                         <span class="slider-knob"></span>
                     </span>
                 </label>
@@ -28,7 +33,7 @@
             <div id="login-view" style="display: none;">
                 <h2 data-i18n="login_title">Sign In</h2>
                 <div class="input-group">
-                    <input type="text" placeholder="Username" id="username">
+                    <input type="email" placeholder="Email" id="username">
                     <input type="password" placeholder="Password" id="password">
                 </div>
 

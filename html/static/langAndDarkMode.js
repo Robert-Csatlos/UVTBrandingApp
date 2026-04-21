@@ -44,8 +44,8 @@ const translations = {
         toggle_lang: "Switch to Romanian"
     },
     ro: {
-        greeting: "Bine ai venit pe site-ul meu simplist",
-        description: "Construit cu FastAPI, HTML, CSS și JS.",
+        greeting: "Bine ai venit pe UVT Branding App",
+        description: "Loghează-te în contul tău",
         toggle_theme: "Schimbă modul întunecat",
         toggle_lang: "Schimbă în Engleză"
     } 

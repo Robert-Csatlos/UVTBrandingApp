@@ -77,3 +77,7 @@ class Handover(HandoverCreate):
     pdf_report_path: Optional[str]
     is_confirmed: bool
     class Config: from_attributes = True
+
+class UserLogin(BaseModel):
+    username: str # The user will input their email here
+    password: str
