@@ -38,7 +38,6 @@ class Loan(Base):
 
 class Handover(Base):
     __tablename__ = "handovers"
-    __tablename__ = "handovers"
     id = Column(Integer, primary_key=True, index=True)
     inventory_id = Column(Integer, ForeignKey("inventory.id"))
     sender_id = Column(Integer, ForeignKey("users.id"))
