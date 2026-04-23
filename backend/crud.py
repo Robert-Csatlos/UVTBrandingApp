@@ -1,5 +1,6 @@
 from sqlalchemy.orm import Session
-import models, schemas
+from . import models, schemas
+from .auth import get_password_hash
 
 # Inventory Logic
 def create_inventory(db: Session, item: schemas.InventoryCreate):
@@ -14,8 +15,7 @@ def get_all_inventory(db: Session):
 
 # User Logic
 def create_user(db: Session, user: schemas.UserCreate):
-    # Note: In production, hash user.password here!
-    db_user = models.User(email=user.email, hashed_password=user.password, role=user.role)
+    db_user = models.User(email=user.email, hashed_password=get_password_hash(user.password), role=user.role)
     db.add(db_user)
     db.commit()
     db.refresh(db_user)
