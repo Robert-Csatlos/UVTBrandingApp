@@ -1,14 +1,112 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/home.css">
-        <title>Document</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>WELCOME TO UVT BRANDING APP</h1>
-        </div>
-    </body>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+</head>
+<body>
+
+    <div class="app-container">
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-placeholder">UVT</div>
+                <h2 data-i18n="app_title">Branding App</h2>
+            </div>
+
+            <nav class="sidebar-nav">
+                <span class="nav-section">MODULES</span>
+                <a href="/home" class="nav-item active">
+                    <span class="icon">📊</span> <span data-i18n="nav_dashboard">Dashboard</span>
+                </a>
+                <a href="/inventory" class="nav-item">
+                    <span class="icon">📦</span> <span data-i18n="nav_inventory">Inventory</span>
+                </a>
+                <a href="/loans" class="nav-item">
+                    <span class="icon">↔️</span> <span data-i18n="nav_loans">Loans</span>
+                    <span class="badge red"></span>
+                </a>
+                <a href="/handover" class="nav-item">
+                    <span class="icon">🔄</span> <span data-i18n="nav_returns">Returns</span>
+                </a>
+
+                <span class="nav-section">REPORTS</span>
+                <a href="/reports" class="nav-item">
+                    <span class="icon">📈</span> <span data-i18n="nav_reports">Reports</span>
+                </a>
+                <a href="/notifications" class="nav-item">
+                    <span class="icon">🔔</span> <span data-i18n="nav_notifications">Notifications</span>
+                    <span class="badge red"></span>
+                </a>
+
+                <span class="nav-section">ADMIN</span>
+                <a href="/users" class="nav-item">
+                    <span class="icon">⚙️</span> <span data-i18n="nav_users">Users</span>
+                </a>
+            </nav>
+
+            <div class="sidebar-footer">
+                <div class="user-avatar">AM</div>
+                <div class="user-info">
+                    <strong>Ana Munteanu</strong>
+                    <span>Super Admin</span>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-content">
+            <header class="top-header">
+                <h1 data-i18n="dashboard_title">Dashboard Overview</h1>
+                <div class="top-controls">
+                    <label class="theme-switch">
+                        <input type="checkbox" id="theme-toggle">
+                        <span class="slider">
+                            <span class="moon-icon">🌙</span>
+                            <span class="sun-icon">☀️</span>
+                            <span class="slider-knob"></span>
+                        </span>
+                    </label>
+                    <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+                </div>
+            </header>
+
+            <div class="dashboard-grid">
+                <div class="kpi-card">
+                    <h3 data-i18n="kpi_total">Total materials</h3>
+                    <div class="value">247</div>
+                    <p data-i18n="kpi_total_desc">in inventory</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 data-i18n="kpi_available">Available</h3>
+                    <div class="value text-success">189</div>
+                    <p data-i18n="kpi_available_desc">ready for loan</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 data-i18n="kpi_borrowed">Borrowed</h3>
+                    <div class="value text-warning">38</div>
+                    <p data-i18n="kpi_borrowed_desc">active right now</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 data-i18n="kpi_overdue">Overdue</h3>
+                    <div class="value text-danger">4</div>
+                    <p data-i18n="kpi_overdue_desc">past deadline</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 data-i18n="kpi_pending">Pending returns</h3>
+                    <div class="value">6</div>
+                    <p data-i18n="kpi_pending_desc">awaiting confirmation</p>
+                </div>
+                <div class="kpi-card">
+                    <h3 data-i18n="kpi_low">Low stock</h3>
+                    <div class="value text-warning">3</div>
+                    <p data-i18n="kpi_low_desc">quantity under 20</p>
+                </div>
+            </div>
+            
+            </main>
+    </div>
+
+    <script src="/static/langAndDarkMode.js"></script>
+</body>
 </html>
