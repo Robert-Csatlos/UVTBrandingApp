@@ -99,7 +99,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const uvtBtn = document.querySelector('.uvt-btn');
     if (uvtBtn) {
         uvtBtn.addEventListener('click', () => {
-            window.location.href = "https://e-uvt.ro/login"; 
+            window.location.href = "https://e-uvt.ro/login";
         });
     }
 });
