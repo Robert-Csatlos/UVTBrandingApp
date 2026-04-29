@@ -17,7 +17,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // --- 2. ELEMENTS FOR LOGIN ---
     const loginSubmit = document.querySelector('.login-submit');
-    const usernameInput = document.getElementById('username');
+    const emailInput = document.getElementById('email');
     const passwordInput = document.getElementById('password');
     
     // Toast Elements
@@ -26,7 +26,7 @@ document.addEventListener('DOMContentLoaded', () => {
     let toastTimeout;
 
     // --- 3. TOAST NOTIFICATION FUNCTION ---
-    function showErrorToast(message = "Invalid username or password!") {
+    function showErrorToast(message = "Invalid email or password!") {
         if (!toastError) {
             console.error("Toast HTML is missing from the page!");
             return;
@@ -59,16 +59,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
-    if (usernameInput) usernameInput.addEventListener('keypress', handleEnterKey);
+    if (emailInput) emailInput.addEventListener('keypress', handleEnterKey);
     if (passwordInput) passwordInput.addEventListener('keypress', handleEnterKey);
 
     // --- 5. MAIN LOGIN LOGIC ---
     loginSubmit.addEventListener('click', async () => {
-        const user = usernameInput.value.trim();
+        const email = emailInput.value.trim();
         const pass = passwordInput.value;
 
         // Front-end validation: Ensure fields aren't empty
-        if (!user || !pass) {
+        if (!email || !pass) {
             showErrorToast("Please enter both email and password!");
             return;
         }
@@ -79,15 +79,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username: user, password: pass })
+                body: JSON.stringify({ email: email, password: pass })
             });
 
             if (response.ok) {
-                // Success!
-                window.location.href = "/home";
+                const data = await response.json();
+                window.location.href = data.role === "SuperAdmin" ? "/admin" : "/home";
             } else {
                 // Backend rejected the login (e.g., 401 Unauthorized)
-                showErrorToast("Invalid username or password!");
+                showErrorToast("Invalid email or password!");
             }
         } catch (error) {
             console.error("Server communication error:", error);

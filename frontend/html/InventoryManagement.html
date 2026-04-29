@@ -1,14 +1,648 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/home.css">
-        <title>Inventory</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>WELCOME TO UVT BRANDING APP</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventory – UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+    <style>
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        .search-input {
+            flex: 1;
+            min-width: 220px;
+            padding: 10px 14px;
+            border: 1px solid var(--border, #cbd5e0);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--card-bg, #fff);
+            color: var(--text-color, #1a202c);
+        }
+        .search-input:focus { outline: none; border-color: #0057a8; }
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid var(--border, #cbd5e0);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--card-bg, #fff);
+            color: var(--text-color, #1a202c);
+            cursor: pointer;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+            white-space: nowrap;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #0057a8; color: #fff; }
+        .btn-danger  { background: #e53e3e; color: #fff; padding: 6px 12px; font-size: 13px; }
+        .btn-edit    { background: #3182ce; color: #fff; padding: 6px 12px; font-size: 13px; }
+        .btn-cancel  { background: var(--border, #e2e8f0); color: var(--text-color, #1a202c); }
+
+        .inv-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg, #fff);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .inv-table th,
+        .inv-table td {
+            padding: 12px 16px;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #e2e8f0);
+        }
+        .inv-table th {
+            background: var(--sidebar-bg, #f7f9fc);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--sidebar-text, #718096);
+        }
+        .inv-table tr:last-child td { border-bottom: none; }
+        .inv-table tr:hover td { background: var(--hover-bg, #f0f4f8); }
+
+        .status-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .status-new  { background: #dbeafe; color: #1e40af; }
+        .status-good { background: #dcfce7; color: #166534; }
+        .status-worn { background: #fef3c7; color: #92400e; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card-bg, #fff);
+            border-radius: 16px;
+            padding: 32px;
+            width: 500px;
+            max-width: 95vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+        .modal h3 { margin: 0 0 24px; font-size: 20px; color: var(--text-color, #1a202c); }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 6px;
+            color: var(--text-muted, #4a5568);
+        }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border, #cbd5e0);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--card-bg, #fff);
+            color: var(--text-color, #1a202c);
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus { outline: none; border-color: #0057a8; }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+        .error-msg { color: #e53e3e; font-size: 13px; margin-top: 8px; }
+
+        /* Delete confirm */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+        }
+        .confirm-overlay.open { display: flex; }
+        .confirm-box {
+            background: var(--card-bg, #fff);
+            border-radius: 16px;
+            padding: 28px;
+            width: 360px;
+            max-width: 95vw;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .confirm-box p { margin: 0 0 20px; font-size: 15px; color: var(--text-color, #1a202c); }
+        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+        .toast-success {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #38a169;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 2000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        @media (max-width: 640px) {
+            .form-row { grid-template-columns: 1fr; }
+            .inv-table th:nth-child(6),
+            .inv-table td:nth-child(6),
+            .inv-table th:nth-child(7),
+            .inv-table td:nth-child(7) { display: none; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-placeholder">UVT</div>
+            <h2 data-i18n="app_title">Branding App</h2>
         </div>
-    </body>
+        <nav class="sidebar-nav">
+            <span class="nav-section" data-i18n="nav_section_modules">MODULES</span>
+
+            <a href="/home" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                <span class="icon">📊</span>
+                <span data-i18n="nav_dashboard">Dashboard</span>
+            </a>
+
+            <a href="/inventory" class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                <span class="icon">📦</span>
+                <span data-i18n="nav_inventory">Inventory</span>
+            </a>
+
+            <a href="/loans" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">↔️</span>
+                <span data-i18n="nav_loans">Loans</span>
+                <span class="badge red" id="badge-loans"></span>
+            </a>
+
+            <a href="/handover" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">🔄</span>
+                <span data-i18n="nav_handover">Handover</span>
+            </a>
+
+            <span class="nav-section" data-i18n="nav_section_reports">REPORTS</span>
+
+            <a href="/reports" class="nav-item" data-roles="SuperAdmin,Admin">
+                <span class="icon">📈</span>
+                <span data-i18n="nav_reports">Reports</span>
+            </a>
+
+            <a href="/notifications" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">🔔</span>
+                <span data-i18n="nav_notifications">Notifications</span>
+                <span class="badge red" id="badge-notifs"></span>
+            </a>
+
+            <span class="nav-section" data-i18n="nav_section_admin">ADMIN</span>
+
+            <a href="/admin" class="nav-item" data-roles="SuperAdmin">
+                <span class="icon">👥</span>
+                <span data-i18n="nav_users">User Management</span>
+            </a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="user-initials">?</div>
+            <div class="user-info">
+                <strong id="user-name">Loading...</strong>
+                <span id="user-role-label"></span>
+            </div>
+            <button title="Logout" onclick="logout()" style="
+                background:none; border:none; cursor:pointer;
+                font-size:18px; margin-left:auto; opacity:0.55;
+                padding:4px; line-height:1;
+            ">⏏</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1 data-i18n="inv_title">Inventory Management</h1>
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider">
+                        <span class="moon-icon">🌙</span>
+                        <span class="sun-icon">☀️</span>
+                        <span class="slider-knob"></span>
+                    </span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <input
+                type="text"
+                id="search-input"
+                class="search-input"
+                placeholder="Search by name, code, or category..."
+                oninput="filterTable()"
+            >
+            <select id="filter-status" class="filter-select" onchange="filterTable()">
+                <option value="" data-i18n="inv_filter_all_status">All Statuses</option>
+                <option value="new"  data-i18n="inv_status_new">New</option>
+                <option value="good" data-i18n="inv_status_good">Good</option>
+                <option value="worn" data-i18n="inv_status_worn">Worn</option>
+            </select>
+            <button id="add-btn" class="btn btn-primary" onclick="openAddModal()" style="display:none" data-i18n="inv_add">
+                + Add Item
+            </button>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th data-i18n="inv_col_code">Code</th>
+                        <th data-i18n="inv_col_name">Name</th>
+                        <th data-i18n="inv_col_category">Category</th>
+                        <th data-i18n="inv_col_qty">Qty</th>
+                        <th data-i18n="inv_col_status">Status</th>
+                        <th data-i18n="inv_col_location">Location</th>
+                        <th data-i18n="inv_col_responsible">Responsible</th>
+                        <th data-i18n="inv_col_actions">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inv-tbody">
+                    <tr><td colspan="8" style="text-align:center;color:#718096;" data-i18n="inv_loading">Loading...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="item-modal">
+    <div class="modal">
+        <h3 id="modal-title" data-i18n="inv_modal_add_title">Add Inventory Item</h3>
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="inv_field_name">Name</label>
+                <input type="text" id="field-name" placeholder="Banner UVT">
+            </div>
+            <div class="form-group">
+                <label data-i18n="inv_field_category">Category</label>
+                <input type="text" id="field-category" placeholder="Banner">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="inv_field_code">Inventory Code</label>
+                <input type="text" id="field-code" placeholder="INV-001">
+            </div>
+            <div class="form-group">
+                <label data-i18n="inv_field_qty">Quantity</label>
+                <input type="number" id="field-qty" min="0" value="1">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label data-i18n="inv_field_status">Status</label>
+                <select id="field-status">
+                    <option value="new"  data-i18n="inv_status_new">New</option>
+                    <option value="good" data-i18n="inv_status_good">Good</option>
+                    <option value="worn" data-i18n="inv_status_worn">Worn</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label data-i18n="inv_field_location">Location</label>
+                <input type="text" id="field-location" placeholder="Depozit A">
+            </div>
+        </div>
+        <div class="form-group">
+            <label data-i18n="inv_field_responsible">Responsible Person</label>
+            <input type="text" id="field-responsible" placeholder="Andrei Popescu">
+        </div>
+        <div class="error-msg" id="modal-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeModal()" data-i18n="btn_cancel">Cancel</button>
+            <button class="btn btn-primary" id="modal-submit-btn" onclick="submitModal()" data-i18n="btn_create">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <p id="confirm-text"></p>
+        <div class="confirm-actions">
+            <button class="btn btn-cancel" onclick="closeConfirm()" data-i18n="btn_cancel">Cancel</button>
+            <button class="btn btn-danger" onclick="confirmDelete()" data-i18n="btn_delete">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-success" id="toast-success"></div>
+
+<script src="/static/langAndDarkMode.js"></script>
+<script>
+    let currentRole = null;
+    let editingItemId = null;
+    let deletingItemId = null;
+    let allItems = [];
+
+    // Auth guard + sidebar setup
+    async function initPage() {
+        try {
+            const res = await fetch("/me");
+            if (!res.ok) { window.location.href = "/"; return; }
+            const user = await res.json();
+            currentRole = user.role;
+            applySidebar(user);
+            applyRoleUI();
+            await loadInventory();
+        } catch (_) {
+            window.location.href = "/";
+        }
+    }
+
+    function applySidebar(user) {
+        const name = user.full_name || user.email;
+        document.getElementById("user-name").textContent = name;
+        document.getElementById("user-role-label").textContent = user.role;
+        if (user.full_name) {
+            const initials = user.full_name.trim().split(/\s+/)
+                .map(w => w[0]).join("").slice(0, 2).toUpperCase();
+            document.getElementById("user-initials").textContent = initials;
+        }
+        document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+            el.style.display = el.dataset.roles.split(",").includes(user.role) ? "" : "none";
+        });
+        document.querySelectorAll(".nav-section").forEach(section => {
+            let next = section.nextElementSibling;
+            let hasVisible = false;
+            while (next && !next.classList.contains("nav-section")) {
+                if (next.classList.contains("nav-item") && next.style.display !== "none") {
+                    hasVisible = true; break;
+                }
+                next = next.nextElementSibling;
+            }
+            section.style.display = hasVisible ? "" : "none";
+        });
+    }
+
+    function applyRoleUI() {
+        const canCreate = ["SuperAdmin", "Admin"].includes(currentRole);
+        document.getElementById("add-btn").style.display = canCreate ? "" : "none";
+    }
+
+    // --- Load inventory ---
+    async function loadInventory() {
+        try {
+            const res = await fetch("/inventory/");
+            if (res.status === 401) { window.location.href = "/"; return; }
+            allItems = await res.json();
+            filterTable();
+        } catch (_) {
+            document.getElementById("inv-tbody").innerHTML =
+                '<tr><td colspan="8" style="text-align:center;color:#e53e3e;">Failed to load inventory.</td></tr>';
+        }
+    }
+
+    // --- Filter / search ---
+    function filterTable() {
+        const q = document.getElementById("search-input").value.toLowerCase();
+        const statusFilter = document.getElementById("filter-status").value;
+        const filtered = allItems.filter(item => {
+            const matchText = !q ||
+                item.name.toLowerCase().includes(q) ||
+                item.inventory_code.toLowerCase().includes(q) ||
+                item.category.toLowerCase().includes(q);
+            const matchStatus = !statusFilter || item.status === statusFilter;
+            return matchText && matchStatus;
+        });
+        renderTable(filtered);
+    }
+
+    function renderTable(items) {
+        const tbody = document.getElementById("inv-tbody");
+        if (!items.length) {
+            const t = window.i18n && window.i18n[currentLang] || {};
+            const msg = t.inv_empty || "No items found.";
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#718096;">${msg}</td></tr>`;
+            return;
+        }
+        const canEdit   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
+        const canDelete = ["SuperAdmin", "Admin"].includes(currentRole);
+        const t = window.i18n && window.i18n[currentLang] || {};
+
+        tbody.innerHTML = items.map(item => `
+            <tr>
+                <td><code style="font-size:12px;background:var(--hover-bg,#f0f4f8);padding:2px 6px;border-radius:4px;">${escHtml(item.inventory_code)}</code></td>
+                <td>${escHtml(item.name)}</td>
+                <td>${escHtml(item.category)}</td>
+                <td>${item.quantity}</td>
+                <td><span class="status-badge status-${item.status}">${statusLabel(item.status)}</span></td>
+                <td>${escHtml(item.location)}</td>
+                <td>${escHtml(item.responsible_person)}</td>
+                <td style="white-space:nowrap;">
+                    ${canEdit   ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">${t.btn_edit   || "Edit"}</button>` : ""}
+                    ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">${t.btn_delete || "Delete"}</button>` : ""}
+                    ${!canEdit && !canDelete ? '<span style="color:#718096;font-size:13px;">—</span>' : ""}
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function statusLabel(status) {
+        const t = window.i18n && window.i18n[currentLang] || {};
+        const map = { new: t.inv_status_new || "New", good: t.inv_status_good || "Good", worn: t.inv_status_worn || "Worn" };
+        return map[status] || status;
+    }
+
+    function escHtml(str) {
+        return String(str ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;");
+    }
+
+    // --- Add Modal ---
+    function openAddModal() {
+        editingItemId = null;
+        const t = window.i18n && window.i18n[currentLang] || {};
+        document.getElementById("modal-title").textContent = t.inv_modal_add_title || "Add Inventory Item";
+        document.getElementById("modal-submit-btn").textContent = t.btn_create || "Create";
+        clearForm();
+        document.getElementById("modal-error").textContent = "";
+        document.getElementById("item-modal").classList.add("open");
+    }
+
+    // --- Edit Modal ---
+    function openEditModal(id) {
+        const item = allItems.find(i => i.id === id);
+        if (!item) return;
+        editingItemId = id;
+        const t = window.i18n && window.i18n[currentLang] || {};
+        document.getElementById("modal-title").textContent = t.inv_modal_edit_title || "Edit Inventory Item";
+        document.getElementById("modal-submit-btn").textContent = t.btn_save || "Save";
+        document.getElementById("field-name").value        = item.name;
+        document.getElementById("field-category").value    = item.category;
+        document.getElementById("field-code").value        = item.inventory_code;
+        document.getElementById("field-qty").value         = item.quantity;
+        document.getElementById("field-status").value      = item.status;
+        document.getElementById("field-location").value    = item.location;
+        document.getElementById("field-responsible").value = item.responsible_person;
+        document.getElementById("modal-error").textContent = "";
+        document.getElementById("item-modal").classList.add("open");
+    }
+
+    function clearForm() {
+        document.getElementById("field-name").value        = "";
+        document.getElementById("field-category").value    = "";
+        document.getElementById("field-code").value        = "";
+        document.getElementById("field-qty").value         = "1";
+        document.getElementById("field-status").value      = "new";
+        document.getElementById("field-location").value    = "";
+        document.getElementById("field-responsible").value = "";
+    }
+
+    function closeModal() {
+        document.getElementById("item-modal").classList.remove("open");
+    }
+
+    // --- Submit Add / Edit ---
+    async function submitModal() {
+        const name        = document.getElementById("field-name").value.trim();
+        const category    = document.getElementById("field-category").value.trim();
+        const code        = document.getElementById("field-code").value.trim();
+        const qty         = parseInt(document.getElementById("field-qty").value, 10);
+        const status      = document.getElementById("field-status").value;
+        const location    = document.getElementById("field-location").value.trim();
+        const responsible = document.getElementById("field-responsible").value.trim();
+        const errEl       = document.getElementById("modal-error");
+        const t           = window.i18n && window.i18n[currentLang] || {};
+        errEl.textContent = "";
+
+        if (!name || !category || !code || !location || !responsible) {
+            errEl.textContent = t.inv_err_required || "All fields are required.";
+            return;
+        }
+        if (isNaN(qty) || qty < 0) {
+            errEl.textContent = t.inv_err_qty || "Quantity must be ≥ 0.";
+            return;
+        }
+
+        const body   = { name, category, inventory_code: code, quantity: qty, status, location, responsible_person: responsible };
+        const url    = editingItemId === null ? "/inventory/" : `/inventory/${editingItemId}`;
+        const method = editingItemId === null ? "POST" : "PUT";
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                errEl.textContent = data.detail || "An error occurred.";
+                return;
+            }
+            closeModal();
+            showToast(editingItemId === null ? "inv_toast_created" : "inv_toast_updated");
+            await loadInventory();
+        } catch (_) {
+            errEl.textContent = "Server error. Try again.";
+        }
+    }
+
+    // --- Delete ---
+    function askDelete(id) {
+        const item = allItems.find(i => i.id === id);
+        const name = item ? item.name : `#${id}`;
+        deletingItemId = id;
+        const t = window.i18n && window.i18n[currentLang] || {};
+        const msg = t.inv_del_confirm || "Delete this item? This cannot be undone.";
+        document.getElementById("confirm-text").textContent = `"${name}" — ${msg}`;
+        document.getElementById("confirm-overlay").classList.add("open");
+    }
+
+    function closeConfirm() {
+        document.getElementById("confirm-overlay").classList.remove("open");
+        deletingItemId = null;
+    }
+
+    async function confirmDelete() {
+        if (!deletingItemId) return;
+        try {
+            const res = await fetch(`/inventory/${deletingItemId}`, { method: "DELETE" });
+            const data = await res.json();
+            if (!res.ok) { alert(data.detail || "Could not delete item."); return; }
+            closeConfirm();
+            showToast("inv_toast_deleted");
+            await loadInventory();
+        } catch (_) {
+            alert("Server error. Try again.");
+        }
+    }
+
+    // --- Toast ---
+    function showToast(key) {
+        const t = window.i18n && window.i18n[currentLang] || {};
+        const msg = t[key] || key;
+        const el = document.getElementById("toast-success");
+        el.textContent = msg;
+        el.style.display = "block";
+        setTimeout(() => { el.style.display = "none"; }, 3000);
+    }
+
+    // --- Logout ---
+    async function logout() {
+        await fetch("/logout/", { method: "POST" });
+        window.location.href = "/";
+    }
+
+    // Re-render table and update placeholder when language changes
+    document.addEventListener("DOMContentLoaded", () => {
+        const langToggleBtn = document.getElementById("lang-toggle");
+        if (langToggleBtn) {
+            langToggleBtn.addEventListener("click", () => {
+                // currentLang is updated by langAndDarkMode.js; run after its handler
+                setTimeout(() => {
+                    updateSearchPlaceholder();
+                    filterTable();
+                }, 0);
+            });
+        }
+        updateSearchPlaceholder();
+    });
+
+    function updateSearchPlaceholder() {
+        const t = window.i18n && window.i18n[currentLang] || {};
+        const el = document.getElementById("search-input");
+        if (el && t.inv_search_placeholder) el.placeholder = t.inv_search_placeholder;
+    }
+
+    initPage();
+</script>
+</body>
 </html>

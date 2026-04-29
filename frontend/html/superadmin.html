@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SuperAdmin Panel – UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+    <style>
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 24px;
+        }
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #0057a8; color: #fff; }
+        .btn-danger  { background: #e53e3e; color: #fff; padding: 6px 12px; font-size: 13px; }
+        .btn-edit    { background: #3182ce; color: #fff; padding: 6px 12px; font-size: 13px; }
+
+        .users-table {
+            width: 100%;
+            border-collapse: collapse;
+            background: var(--card-bg, #fff);
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        }
+        .users-table th,
+        .users-table td {
+            padding: 14px 18px;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #e2e8f0);
+        }
+        .users-table th {
+            background: var(--sidebar-bg, #f7f9fc);
+            font-size: 12px;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #718096);
+        }
+        .users-table tr:last-child td { border-bottom: none; }
+        .users-table tr:hover td { background: var(--hover-bg, #f0f4f8); }
+
+        .role-badge {
+            display: inline-block;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .role-SuperAdmin  { background: #fef3c7; color: #92400e; }
+        .role-Admin       { background: #dbeafe; color: #1e40af; }
+        .role-Coordinator { background: #dcfce7; color: #166534; }
+        .role-Vizualizator{ background: #f3f4f6; color: #374151; }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+        .modal {
+            background: var(--card-bg, #fff);
+            border-radius: 16px;
+            padding: 32px;
+            width: 420px;
+            max-width: 95vw;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .modal h3 { margin: 0 0 24px; font-size: 20px; }
+        .form-group { margin-bottom: 16px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted, #4a5568); }
+        .form-group input,
+        .form-group select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid var(--border, #cbd5e0);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--input-bg, #fff);
+            color: var(--text, #1a202c);
+            box-sizing: border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus {
+            outline: none;
+            border-color: #0057a8;
+        }
+        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
+        .btn-cancel { background: var(--border, #e2e8f0); color: var(--text, #1a202c); }
+
+        .error-msg { color: #e53e3e; font-size: 13px; margin-top: 8px; }
+
+        /* Delete confirm */
+        .confirm-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.45);
+            z-index: 1100;
+            justify-content: center;
+            align-items: center;
+        }
+        .confirm-overlay.open { display: flex; }
+        .confirm-box {
+            background: var(--card-bg, #fff);
+            border-radius: 16px;
+            padding: 28px;
+            width: 340px;
+            text-align: center;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
+        }
+        .confirm-box p { margin: 0 0 20px; font-size: 15px; }
+        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+
+        .toast-success {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            background: #38a169;
+            color: #fff;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 14px;
+            display: none;
+            z-index: 2000;
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-placeholder">UVT</div>
+            <h2>Branding App</h2>
+        </div>
+        <nav class="sidebar-nav">
+
+            <span class="nav-section" data-i18n="nav_section_modules">MODULES</span>
+
+            <a href="/home" class="nav-item"
+               data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                <span class="icon">📊</span>
+                <span data-i18n="nav_dashboard">Dashboard</span>
+            </a>
+
+            <a href="/inventory" class="nav-item"
+               data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                <span class="icon">📦</span>
+                <span data-i18n="nav_inventory">Inventory</span>
+            </a>
+
+            <a href="/loans" class="nav-item"
+               data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">↔️</span>
+                <span data-i18n="nav_loans">Loans</span>
+            </a>
+
+            <a href="/handover" class="nav-item"
+               data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">🔄</span>
+                <span data-i18n="nav_handover">Handover</span>
+            </a>
+
+            <span class="nav-section" data-i18n="nav_section_reports">REPORTS</span>
+
+            <a href="/reports" class="nav-item"
+               data-roles="SuperAdmin,Admin">
+                <span class="icon">📈</span>
+                <span data-i18n="nav_reports">Reports</span>
+            </a>
+
+            <a href="/notifications" class="nav-item"
+               data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">🔔</span>
+                <span data-i18n="nav_notifications">Notifications</span>
+            </a>
+
+            <span class="nav-section" data-i18n="nav_section_admin">ADMIN</span>
+
+            <a href="/admin" class="nav-item active"
+               data-roles="SuperAdmin">
+                <span class="icon">👥</span>
+                <span data-i18n="nav_users">User Management</span>
+            </a>
+
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="user-initials">SA</div>
+            <div class="user-info">
+                <strong id="user-name">SuperAdmin</strong>
+                <span id="user-role-label">Super Admin</span>
+            </div>
+            <button title="Logout" onclick="logout()" style="
+                background:none; border:none; cursor:pointer;
+                font-size:18px; margin-left:auto; opacity:0.55;
+                padding:4px; line-height:1;
+            ">⏏</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>User Management</h1>
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider">
+                        <span class="moon-icon">🌙</span>
+                        <span class="sun-icon">☀️</span>
+                        <span class="slider-knob"></span>
+                    </span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+        </header>
+
+        <div class="panel-header">
+            <p style="margin:0;color:var(--text-muted,#718096);">Manage all application users.</p>
+            <button class="btn btn-primary" onclick="openAddModal()">+ Add User</button>
+        </div>
+
+        <table class="users-table" id="users-table">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Full Name</th>
+                    <th>Email</th>
+                    <th>Role</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody id="users-tbody">
+                <tr><td colspan="5" style="text-align:center;color:#718096;">Loading...</td></tr>
+            </tbody>
+        </table>
+    </main>
+</div>
+
+<!-- Add / Edit Modal -->
+<div class="modal-overlay" id="user-modal">
+    <div class="modal">
+        <h3 id="modal-title">Add User</h3>
+        <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="field-name" placeholder="Ana Munteanu">
+        </div>
+        <div class="form-group">
+            <label>Email (@e-uvt.ro)</label>
+            <input type="email" id="field-email" placeholder="ana.munteanu@e-uvt.ro">
+        </div>
+        <div class="form-group">
+            <label>Role</label>
+            <select id="field-role">
+                <option value="SuperAdmin">SuperAdmin</option>
+                <option value="Admin">Admin</option>
+                <option value="Coordinator">Coordinator</option>
+                <option value="Vizualizator" selected>Vizualizator</option>
+            </select>
+        </div>
+        <div class="form-group" id="password-group">
+            <label id="password-label">Password (min 8 chars)</label>
+            <input type="password" id="field-password" placeholder="••••••••">
+        </div>
+        <div class="error-msg" id="modal-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="modal-submit-btn" onclick="submitModal()">Create</button>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Confirm -->
+<div class="confirm-overlay" id="confirm-overlay">
+    <div class="confirm-box">
+        <p id="confirm-text">Are you sure you want to delete this user?</p>
+        <div class="confirm-actions">
+            <button class="btn btn-cancel" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger" id="confirm-yes-btn" onclick="confirmDelete()">Delete</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-success" id="toast-success"></div>
+
+<script src="/static/langAndDarkMode.js"></script>
+<script>
+    let editingUserId = null;
+    let deletingUserId = null;
+
+    // --- Fetch and render users ---
+    async function loadUsers() {
+        try {
+            const res = await fetch("/admin/users/");
+            if (res.status === 401 || res.status === 403) {
+                window.location.href = "/";
+                return;
+            }
+            const users = await res.json();
+            renderUsers(users);
+        } catch (e) {
+            document.getElementById("users-tbody").innerHTML =
+                '<tr><td colspan="5" style="text-align:center;color:#e53e3e;">Failed to load users.</td></tr>';
+        }
+    }
+
+    function renderUsers(users) {
+        const tbody = document.getElementById("users-tbody");
+        if (!users.length) {
+            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center;color:#718096;">No users found.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = users.map(u => `
+            <tr>
+                <td>${u.id}</td>
+                <td>${u.full_name || "<em style='color:#718096'>—</em>"}</td>
+                <td>${u.email}</td>
+                <td><span class="role-badge role-${u.role}">${u.role}</span></td>
+                <td>
+                    <button class="btn btn-edit" onclick="openEditModal(${u.id}, '${escHtml(u.full_name || '')}', '${escHtml(u.email)}', '${u.role}')">Edit</button>
+                    <button class="btn btn-danger" style="margin-left:8px" onclick="askDelete(${u.id}, '${escHtml(u.full_name || u.email)}')">Delete</button>
+                </td>
+            </tr>
+        `).join("");
+    }
+
+    function escHtml(str) {
+        return String(str).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+    }
+
+    // --- Add Modal ---
+    function openAddModal() {
+        editingUserId = null;
+        document.getElementById("modal-title").textContent = "Add User";
+        document.getElementById("modal-submit-btn").textContent = "Create";
+        document.getElementById("field-name").value = "";
+        document.getElementById("field-email").value = "";
+        document.getElementById("field-role").value = "Vizualizator";
+        document.getElementById("field-password").value = "";
+        document.getElementById("password-label").textContent = "Password (min 8 chars)";
+        document.getElementById("modal-error").textContent = "";
+        document.getElementById("user-modal").classList.add("open");
+    }
+
+    // --- Edit Modal ---
+    function openEditModal(id, name, email, role) {
+        editingUserId = id;
+        document.getElementById("modal-title").textContent = "Edit User";
+        document.getElementById("modal-submit-btn").textContent = "Save";
+        document.getElementById("field-name").value = name;
+        document.getElementById("field-email").value = email;
+        document.getElementById("field-role").value = role;
+        document.getElementById("field-password").value = "";
+        document.getElementById("password-label").textContent = "New Password (leave blank to keep)";
+        document.getElementById("modal-error").textContent = "";
+        document.getElementById("user-modal").classList.add("open");
+    }
+
+    function closeModal() {
+        document.getElementById("user-modal").classList.remove("open");
+    }
+
+    // --- Submit Add / Edit ---
+    async function submitModal() {
+        const name  = document.getElementById("field-name").value.trim();
+        const email = document.getElementById("field-email").value.trim();
+        const role  = document.getElementById("field-role").value;
+        const pass  = document.getElementById("field-password").value;
+        const errEl = document.getElementById("modal-error");
+        errEl.textContent = "";
+
+        if (!email) { errEl.textContent = "Email is required."; return; }
+
+        let url, method, body;
+
+        if (editingUserId === null) {
+            // Create
+            if (!name) { errEl.textContent = "Full name is required."; return; }
+            if (!pass || pass.length < 8) { errEl.textContent = "Password must be at least 8 characters."; return; }
+            url    = "/admin/users/";
+            method = "POST";
+            body   = { email, full_name: name, role, password: pass };
+        } else {
+            // Update — only send changed fields
+            url    = `/admin/users/${editingUserId}`;
+            method = "PUT";
+            body   = {};
+            if (name)  body.full_name = name;
+            if (email) body.email     = email;
+            if (role)  body.role      = role;
+            if (pass)  body.password  = pass;
+        }
+
+        try {
+            const res = await fetch(url, {
+                method,
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                errEl.textContent = data.detail || "An error occurred.";
+                return;
+            }
+            closeModal();
+            showToast(editingUserId === null ? "User created!" : "User updated!");
+            loadUsers();
+        } catch (e) {
+            errEl.textContent = "Server error. Try again.";
+        }
+    }
+
+    // --- Delete ---
+    function askDelete(id, label) {
+        deletingUserId = id;
+        document.getElementById("confirm-text").textContent =
+            `Delete user "${label}"? This cannot be undone.`;
+        document.getElementById("confirm-overlay").classList.add("open");
+    }
+
+    function closeConfirm() {
+        document.getElementById("confirm-overlay").classList.remove("open");
+        deletingUserId = null;
+    }
+
+    async function confirmDelete() {
+        if (!deletingUserId) return;
+        try {
+            const res = await fetch(`/admin/users/${deletingUserId}`, { method: "DELETE" });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.detail || "Could not delete user.");
+                return;
+            }
+            closeConfirm();
+            showToast("User deleted.");
+            loadUsers();
+        } catch (e) {
+            alert("Server error. Try again.");
+        }
+    }
+
+    // --- Toast ---
+    function showToast(msg) {
+        const t = document.getElementById("toast-success");
+        t.textContent = msg;
+        t.style.display = "block";
+        setTimeout(() => { t.style.display = "none"; }, 3000);
+    }
+
+    // --- Sidebar user info + auth guard ---
+    async function loadMe() {
+        try {
+            const res = await fetch("/me");
+            if (!res.ok) { window.location.href = "/"; return; }
+            const u = await res.json();
+            if (u.role !== "SuperAdmin") { window.location.href = "/home"; return; }
+
+            // Footer
+            const name = u.full_name || u.email;
+            document.getElementById("user-name").textContent = name;
+            document.getElementById("user-role-label").textContent = u.role;
+            if (u.full_name) {
+                const initials = u.full_name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                document.getElementById("user-initials").textContent = initials;
+            }
+
+            // Show/hide nav items by role (same logic as home.html)
+            document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+                el.style.display = el.dataset.roles.split(",").includes(u.role) ? "" : "none";
+            });
+            document.querySelectorAll(".nav-section").forEach(section => {
+                let next = section.nextElementSibling;
+                let hasVisible = false;
+                while (next && !next.classList.contains("nav-section")) {
+                    if (next.classList.contains("nav-item") && next.style.display !== "none") {
+                        hasVisible = true; break;
+                    }
+                    next = next.nextElementSibling;
+                }
+                section.style.display = hasVisible ? "" : "none";
+            });
+        } catch (_) { window.location.href = "/"; }
+    }
+
+    async function logout() {
+        await fetch("/logout/", { method: "POST" });
+        window.location.href = "/";
+    }
+
+    loadMe();
+    loadUsers();
+</script>
+</body>
+</html>

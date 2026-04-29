@@ -16,42 +16,77 @@
             </div>
 
             <nav class="sidebar-nav">
-                <span class="nav-section">MODULES</span>
-                <a href="/home" class="nav-item active">
-                    <span class="icon">📊</span> <span data-i18n="nav_dashboard">Dashboard</span>
-                </a>
-                <a href="/inventory" class="nav-item">
-                    <span class="icon">📦</span> <span data-i18n="nav_inventory">Inventory</span>
-                </a>
-                <a href="/loans" class="nav-item">
-                    <span class="icon">↔️</span> <span data-i18n="nav_loans">Loans</span>
-                    <span class="badge red"></span>
-                </a>
-                <a href="/handover" class="nav-item">
-                    <span class="icon">🔄</span> <span data-i18n="nav_returns">Returns</span>
+
+                <span class="nav-section" data-i18n="nav_section_modules">MODULES</span>
+
+                <!-- Dashboard: everyone -->
+                <a href="/home" class="nav-item active"
+                   data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                    <span class="icon">📊</span>
+                    <span data-i18n="nav_dashboard">Dashboard</span>
                 </a>
 
-                <span class="nav-section">REPORTS</span>
-                <a href="/reports" class="nav-item">
-                    <span class="icon">📈</span> <span data-i18n="nav_reports">Reports</span>
-                </a>
-                <a href="/notifications" class="nav-item">
-                    <span class="icon">🔔</span> <span data-i18n="nav_notifications">Notifications</span>
-                    <span class="badge red"></span>
+                <!-- Inventory: everyone (SuperAdmin+Admin get full CRUD, Coordinator gets edit, Vizualizator read-only) -->
+                <a href="/inventory" class="nav-item"
+                   data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                    <span class="icon">📦</span>
+                    <span data-i18n="nav_inventory">Inventory</span>
                 </a>
 
-                <span class="nav-section">ADMIN</span>
-                <a href="/users" class="nav-item">
-                    <span class="icon">⚙️</span> <span data-i18n="nav_users">Users</span>
+                <!-- Loans: SuperAdmin, Admin, Coordinator -->
+                <a href="/loans" class="nav-item"
+                   data-roles="SuperAdmin,Admin,Coordinator">
+                    <span class="icon">↔️</span>
+                    <span data-i18n="nav_loans">Loans</span>
+                    <span class="badge red" id="badge-loans"></span>
                 </a>
+
+                <!-- Handover: SuperAdmin, Admin, Coordinator -->
+                <a href="/handover" class="nav-item"
+                   data-roles="SuperAdmin,Admin,Coordinator">
+                    <span class="icon">🔄</span>
+                    <span data-i18n="nav_handover">Handover</span>
+                </a>
+
+                <span class="nav-section" data-i18n="nav_section_reports">REPORTS</span>
+
+                <!-- Reports: SuperAdmin, Admin only -->
+                <a href="/reports" class="nav-item"
+                   data-roles="SuperAdmin,Admin">
+                    <span class="icon">📈</span>
+                    <span data-i18n="nav_reports">Reports</span>
+                </a>
+
+                <!-- Notifications: SuperAdmin, Admin, Coordinator -->
+                <a href="/notifications" class="nav-item"
+                   data-roles="SuperAdmin,Admin,Coordinator">
+                    <span class="icon">🔔</span>
+                    <span data-i18n="nav_notifications">Notifications</span>
+                    <span class="badge red" id="badge-notifs"></span>
+                </a>
+
+                <span class="nav-section" data-i18n="nav_section_admin">ADMIN</span>
+
+                <!-- User Management: SuperAdmin only -->
+                <a href="/admin" class="nav-item"
+                   data-roles="SuperAdmin">
+                    <span class="icon">👥</span>
+                    <span data-i18n="nav_users">User Management</span>
+                </a>
+
             </nav>
 
             <div class="sidebar-footer">
-                <div class="user-avatar">AM</div>
+                <div class="user-avatar" id="user-initials">?</div>
                 <div class="user-info">
-                    <strong>Ana Munteanu</strong>
-                    <span>Super Admin</span>
+                    <strong id="user-name">Loading...</strong>
+                    <span id="user-role-label"></span>
                 </div>
+                <button title="Logout" onclick="logout()" style="
+                    background:none; border:none; cursor:pointer;
+                    font-size:18px; margin-left:auto; opacity:0.55;
+                    padding:4px; line-height:1;
+                ">⏏</button>
             </div>
         </aside>
 
@@ -103,10 +138,59 @@
                     <p data-i18n="kpi_low_desc">quantity under 20</p>
                 </div>
             </div>
-            
-            </main>
+        </main>
     </div>
 
     <script src="/static/langAndDarkMode.js"></script>
+    <script>
+        // ── Role-based sidebar ──────────────────────────────────────────────
+        async function initPage() {
+            try {
+                const res = await fetch("/me");
+                if (!res.ok) { window.location.href = "/"; return; }
+                const user = await res.json();
+                applySidebar(user);
+            } catch (_) {
+                window.location.href = "/";
+            }
+        }
+
+        function applySidebar(user) {
+            // Footer: name + role + initials
+            const name = user.full_name || user.email;
+            document.getElementById("user-name").textContent = name;
+            document.getElementById("user-role-label").textContent = user.role;
+            if (user.full_name) {
+                const initials = user.full_name.trim().split(/\s+/)
+                    .map(w => w[0]).join("").slice(0, 2).toUpperCase();
+                document.getElementById("user-initials").textContent = initials;
+            }
+
+            // Show only nav items this role can access
+            document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+                el.style.display = el.dataset.roles.split(",").includes(user.role) ? "" : "none";
+            });
+
+            // Hide section headers whose items are all hidden
+            document.querySelectorAll(".nav-section").forEach(section => {
+                let next = section.nextElementSibling;
+                let hasVisible = false;
+                while (next && !next.classList.contains("nav-section")) {
+                    if (next.classList.contains("nav-item") && next.style.display !== "none") {
+                        hasVisible = true; break;
+                    }
+                    next = next.nextElementSibling;
+                }
+                section.style.display = hasVisible ? "" : "none";
+            });
+        }
+
+        async function logout() {
+            await fetch("/logout/", { method: "POST" });
+            window.location.href = "/";
+        }
+
+        initPage();
+    </script>
 </body>
 </html>

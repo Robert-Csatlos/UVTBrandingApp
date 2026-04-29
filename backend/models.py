@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
 from .database import Base
 import datetime
 
+
 class Inventory(Base):
     __tablename__ = "inventory"
 
@@ -22,7 +23,7 @@ class User(Base):
     email = Column(String, unique=True, index=True, nullable=False) # Must be @e-uvt.ro
     hashed_password = Column(String, nullable=False)
     full_name = Column(String, nullable=True)
-    role = Column(String, default="Vizualizator") # Super Admin, Admin Dept, Coordinator, Vizualizator
+    role = Column(String, default="vizualizator") # Super Admin, Admin Dept, Coordinator, Vizualizator
 
 class Loan(Base):
     __tablename__ = "loans"
@@ -32,7 +33,7 @@ class Loan(Base):
     quantity = Column(Integer, default=1)
     reason = Column(String, nullable=True) # eveniment / departament / service
     event_date = Column(DateTime, nullable=True) # deadline = event_date + 2 days
-    checkout_date = Column(DateTime, default=datetime.datetime.utcnow)
+    checkout_date = Column(DateTime, default=lambda:datetime.datetime.now(datetime.timezone.utc))
     deadline_date = Column(DateTime, nullable=False)
     checkin_date = Column(DateTime, nullable=True)
     condition_checkout = Column(String, nullable=True) # excelentă / bună / uzată
@@ -51,7 +52,7 @@ class Handover(Base):
     sender_id = Column(Integer, ForeignKey("users.id"))
     receiver_id = Column(Integer, ForeignKey("users.id"))
     quantity = Column(Integer, default=1)
-    handover_date = Column(DateTime, default=datetime.datetime.utcnow)
+    handover_date = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
     condition_before = Column(String, nullable=True) # sender's reported condition
     condition_after = Column(String, nullable=True) # receiver's reported condition
     photo_before = Column(String, nullable=True)
