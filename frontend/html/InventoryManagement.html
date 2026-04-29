@@ -272,6 +272,9 @@
                 <option value="good" data-i18n="inv_status_good">Good</option>
                 <option value="worn" data-i18n="inv_status_worn">Worn</option>
             </select>
+            <select id="filter-category" class="filter-select" onchange="filterTable()">
+                <option value="" data-i18n="inv_filter_all_cat">All Categories</option>
+            </select>
             <button id="add-btn" class="btn btn-primary" onclick="openAddModal()" style="display:none" data-i18n="inv_add">
                 + Add Item
             </button>
@@ -379,9 +382,19 @@
             applySidebar(user);
             applyRoleUI();
             await loadInventory();
+            loadBadges();
         } catch (_) {
             window.location.href = "/";
         }
+    }
+
+    async function loadBadges() {
+        try {
+            const res = await fetch("/stats");
+            if (!res.ok) return;
+            const s = await res.json();
+            if (s.overdue > 0) document.getElementById("badge-loans").style.display = "inline-block";
+        } catch (_) {}
     }
 
     function applySidebar(user) {
@@ -420,6 +433,7 @@
             const res = await fetch("/inventory/");
             if (res.status === 401) { window.location.href = "/"; return; }
             allItems = await res.json();
+            populateCategoryFilter();
             filterTable();
         } catch (_) {
             document.getElementById("inv-tbody").innerHTML =
@@ -427,17 +441,34 @@
         }
     }
 
+    function populateCategoryFilter() {
+        const select = document.getElementById("filter-category");
+        const current = select.value;
+        const t = window.i18n && window.i18n[currentLang] || {};
+        const categories = [...new Set(allItems.map(i => i.category))].sort();
+        select.innerHTML = `<option value="">${t.inv_filter_all_cat || "All Categories"}</option>`;
+        categories.forEach(cat => {
+            const opt = document.createElement("option");
+            opt.value = cat;
+            opt.textContent = cat;
+            if (cat === current) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
     // --- Filter / search ---
     function filterTable() {
         const q = document.getElementById("search-input").value.toLowerCase();
-        const statusFilter = document.getElementById("filter-status").value;
+        const statusFilter   = document.getElementById("filter-status").value;
+        const categoryFilter = document.getElementById("filter-category").value;
         const filtered = allItems.filter(item => {
             const matchText = !q ||
                 item.name.toLowerCase().includes(q) ||
                 item.inventory_code.toLowerCase().includes(q) ||
                 item.category.toLowerCase().includes(q);
-            const matchStatus = !statusFilter || item.status === statusFilter;
-            return matchText && matchStatus;
+            const matchStatus   = !statusFilter   || item.status   === statusFilter;
+            const matchCategory = !categoryFilter || item.category === categoryFilter;
+            return matchText && matchStatus && matchCategory;
         });
         renderTable(filtered);
     }
@@ -629,6 +660,7 @@
                 // currentLang is updated by langAndDarkMode.js; run after its handler
                 setTimeout(() => {
                     updateSearchPlaceholder();
+                    populateCategoryFilter();
                     filterTable();
                 }, 0);
             });

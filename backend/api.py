@@ -133,6 +133,16 @@ def delete_item(
     return {"message": "Item deleted"}
 
 
+# --- Stats API ---
+
+@app.get("/stats")
+def get_stats(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(get_current_user),
+):
+    return crud.get_stats(db)
+
+
 # --- Loan API ---
 
 @app.post("/loans/", response_model=schemas.Loan)

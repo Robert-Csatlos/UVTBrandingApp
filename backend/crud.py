@@ -98,6 +98,45 @@ def delete_user(db: Session, user_id: int):
     db.commit()
 
 
+# --- Stats ---
+
+def get_stats(db: Session):
+    import datetime
+    now = datetime.datetime.utcnow()
+    soon = now + datetime.timedelta(days=3)
+
+    total = db.query(models.Inventory).count()
+    borrowed = db.query(models.Loan).filter(models.Loan.status == "active").count()
+    overdue = db.query(models.Loan).filter(
+        models.Loan.status == "active",
+        models.Loan.deadline_date < now,
+    ).count()
+    pending = db.query(models.Loan).filter(
+        models.Loan.status == "active",
+        models.Loan.deadline_date >= now,
+        models.Loan.deadline_date <= soon,
+    ).count()
+    low_stock = db.query(models.Inventory).filter(models.Inventory.quantity < 20).count()
+
+    on_loan_ids = [
+        r[0] for r in db.query(models.Loan.inventory_id)
+        .filter(models.Loan.status == "active").distinct().all()
+    ]
+    available = (
+        db.query(models.Inventory).filter(~models.Inventory.id.in_(on_loan_ids)).count()
+        if on_loan_ids else total
+    )
+
+    return {
+        "total": total,
+        "available": available,
+        "borrowed": borrowed,
+        "overdue": overdue,
+        "pending": pending,
+        "low_stock": low_stock,
+    }
+
+
 # --- Loans ---
 
 def create_loan(db: Session, loan: schemas.LoanCreate):
