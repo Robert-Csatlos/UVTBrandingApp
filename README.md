@@ -92,7 +92,7 @@ All roles can view the dashboard.
 
 | Page | Route | Status | Notes |
 |------|-------|--------|-------|
-| Login | `/` | ✅ Done | Redirects to `/admin` (SuperAdmin) or `/home` (others) |
+| Login | `/` | ✅ Done | Redirects all roles to `/home` after login |
 | Dashboard | `/home` | ✅ Done | 6 KPI cards loaded from `/stats`, 3×2 grid layout |
 | Inventory | `/inventory` | ✅ Done | Full CRUD, role-gated, search + status + category filter |
 | User Management | `/admin` | ✅ Done | SuperAdmin only — full CRUD for users |

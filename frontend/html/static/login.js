@@ -84,7 +84,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
             if (response.ok) {
                 const data = await response.json();
-                window.location.href = data.role === "SuperAdmin" ? "/admin" : "/home";
+                window.location.href = "/home";
             } else {
                 // Backend rejected the login (e.g., 401 Unauthorized)
                 showErrorToast("Invalid email or password!");
