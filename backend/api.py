@@ -21,8 +21,12 @@ app = FastAPI(title="UVT Branding App API")
 
 app.mount("/static", StaticFiles(directory="frontend/html/static"), name="static")
 
+# Register reports router
+from .reports import router as reports_router
+app.include_router(reports_router)
 
-# --- Page Routes ---
+
+# ─── Page Routes ──────────────────────────────────────────────────────────────
 
 @app.get("/")
 def serve_login():
@@ -43,6 +47,26 @@ def serve_inventory(request: Request):
     return FileResponse("frontend/html/InventoryManagement.html")
 
 
+@app.get("/loans")
+def serve_loans(request: Request):
+    if get_session_user_id(request) is None:
+        return RedirectResponse(url="/", status_code=302)
+    return FileResponse("frontend/html/loanTrackingDashboard.html")
+
+
+@app.get("/reports")
+def serve_reports(request: Request, db: Session = Depends(get_db)):
+    from .auth import _sessions
+    token = request.cookies.get("session_token")
+    if not token or token not in _sessions:
+        return RedirectResponse(url="/", status_code=302)
+    user_id = _sessions[token]
+    user = db.query(models.User).filter(models.User.id == user_id).first()
+    if not user or user.role not in ("SuperAdmin", "Admin"):
+        return RedirectResponse(url="/home", status_code=302)
+    return FileResponse("frontend/html/reportsDashboard.html")
+
+
 @app.get("/admin")
 def serve_admin(request: Request, db: Session = Depends(get_db)):
     from .auth import _sessions
@@ -56,7 +80,7 @@ def serve_admin(request: Request, db: Session = Depends(get_db)):
     return FileResponse("frontend/html/superadmin.html")
 
 
-# --- Auth API ---
+# ─── Auth API ────────────────────────────────────────────────────────────────
 
 @app.post("/login/")
 def login(user_credentials: schemas.UserLogin, response: Response, db: Session = Depends(get_db)):
@@ -82,7 +106,7 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
-# --- Inventory API ---
+# ─── Inventory API ───────────────────────────────────────────────────────────
 
 @app.post("/inventory/", response_model=schemas.Inventory)
 def add_item(
@@ -133,7 +157,7 @@ def delete_item(
     return {"message": "Item deleted"}
 
 
-# --- Stats API ---
+# ─── Stats API ───────────────────────────────────────────────────────────────
 
 @app.get("/stats")
 def get_stats(
@@ -143,18 +167,83 @@ def get_stats(
     return crud.get_stats(db)
 
 
-# --- Loan API ---
+# ─── Loan API ────────────────────────────────────────────────────────────────
 
 @app.post("/loans/", response_model=schemas.Loan)
 def checkout_item(
     loan: schemas.LoanCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(get_current_user),
+    _: models.User = Depends(require_coordinator_or_above),
 ):
+    """Create a new loan. Coordinator and above."""
     return crud.create_loan(db, loan)
 
 
-# --- Superadmin: User Management API ---
+@app.get("/loans/")
+def list_loans(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(get_current_user),
+):
+    """List all active loans with item + user details. All authenticated users."""
+    return crud.get_active_loans(db)
+
+
+@app.get("/loans/all")
+def list_all_loans(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin_or_above),
+):
+    """List every loan (including returned). Admin and above only."""
+    return crud.get_all_loans(db)
+
+
+@app.post("/loans/{loan_id}/return")
+def return_loan(
+    loan_id: int,
+    update: schemas.LoanReturn,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin_or_above),
+):
+    """Mark a loan as returned. Admin and above only."""
+    return crud.return_loan(db, loan_id, update)
+
+
+@app.post("/loans/{loan_id}/deteriorated")
+def flag_deteriorated(
+    loan_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(require_admin_or_above),
+):
+    """Flag an item as deteriorated. Admin and above only."""
+    return crud.mark_deteriorated(db, loan_id)
+
+
+@app.post("/loans/{loan_id}/notify")
+def send_deadline_notification(
+    loan_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_admin_or_above),
+):
+    """
+    Send a deadline reminder notification for a loan.
+    Admin and SuperAdmin only.
+    In a real deployment this would send an email / push notification.
+    For now it returns the loan details so the frontend can display a confirmation.
+    """
+    loan_rows = crud.get_all_loans(db)
+    loan = next((l for l in loan_rows if l["id"] == loan_id), None)
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+    # TODO: integrate email / notification service here
+    return {
+        "message": f"Notification sent to {loan['borrower_email']}",
+        "loan_id": loan_id,
+        "borrower_email": loan["borrower_email"],
+        "deadline_date": loan["deadline_date"],
+    }
+
+
+# ─── Superadmin: User Management API ─────────────────────────────────────────
 
 @app.get("/admin/users/", response_model=list[schemas.User])
 def list_users(

@@ -47,6 +47,7 @@
         .btn-primary { background: #0057a8; color: #fff; }
         .btn-danger  { background: #e53e3e; color: #fff; padding: 6px 12px; font-size: 13px; }
         .btn-edit    { background: #3182ce; color: #fff; padding: 6px 12px; font-size: 13px; }
+        .btn-loan    { background: #0057a8; color: #fff; padding: 6px 12px; font-size: 13px; }
         .btn-cancel  { background: var(--border, #e2e8f0); color: var(--text-color, #1a202c); }
 
         .inv-table {
@@ -131,6 +132,35 @@
         .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
         .error-msg { color: #e53e3e; font-size: 13px; margin-top: 8px; }
 
+        /* Loan modal specifics */
+        .loan-item-info {
+            background: var(--hover-bg, #f0f4f8);
+            border-radius: 10px;
+            padding: 14px 16px;
+            margin-bottom: 20px;
+        }
+        .loan-item-info strong { font-size: 15px; color: var(--text-color, #1a202c); display: block; margin-bottom: 4px; }
+        .loan-item-info span   { font-size: 13px; color: var(--text-muted, #718096); }
+
+        .photo-upload-area {
+            border: 2px dashed var(--border, #cbd5e0);
+            border-radius: 10px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: border-color 0.2s, background 0.2s;
+        }
+        .photo-upload-area:hover { border-color: #0057a8; background: var(--hover-bg, #f0f4f8); }
+        .photo-upload-area.has-photo { border-color: #38a169; border-style: solid; }
+        .photo-upload-area p { margin: 6px 0 0; font-size: 13px; color: var(--text-muted, #718096); }
+        .photo-preview {
+            max-width: 100%;
+            max-height: 140px;
+            border-radius: 6px;
+            display: none;
+            margin: 8px auto 0;
+        }
+
         /* Delete confirm */
         .confirm-overlay {
             display: none;
@@ -186,43 +216,34 @@
         </div>
         <nav class="sidebar-nav">
             <span class="nav-section" data-i18n="nav_section_modules">MODULES</span>
-
             <a href="/home" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">📊</span>
                 <span data-i18n="nav_dashboard">Dashboard</span>
             </a>
-
             <a href="/inventory" class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">📦</span>
                 <span data-i18n="nav_inventory">Inventory</span>
             </a>
-
-            <a href="/loans" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+            <a href="/loans" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">↔️</span>
                 <span data-i18n="nav_loans">Loans</span>
                 <span class="badge red" id="badge-loans"></span>
             </a>
-
             <a href="/handover" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
                 <span class="icon">🔄</span>
                 <span data-i18n="nav_handover">Handover</span>
             </a>
-
             <span class="nav-section" data-i18n="nav_section_reports">REPORTS</span>
-
             <a href="/reports" class="nav-item" data-roles="SuperAdmin,Admin">
                 <span class="icon">📈</span>
                 <span data-i18n="nav_reports">Reports</span>
             </a>
-
             <a href="/notifications" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
                 <span class="icon">🔔</span>
                 <span data-i18n="nav_notifications">Notifications</span>
                 <span class="badge red" id="badge-notifs"></span>
             </a>
-
             <span class="nav-section" data-i18n="nav_section_admin">ADMIN</span>
-
             <a href="/admin" class="nav-item" data-roles="SuperAdmin">
                 <span class="icon">👥</span>
                 <span data-i18n="nav_users">User Management</span>
@@ -237,8 +258,7 @@
             <button title="Logout" onclick="logout()" style="
                 background:none; border:none; cursor:pointer;
                 font-size:18px; margin-left:auto; opacity:0.55;
-                padding:4px; line-height:1;
-            ">⏏</button>
+                padding:4px; line-height:1;">⏏</button>
         </div>
     </aside>
 
@@ -259,23 +279,18 @@
         </header>
 
         <div class="toolbar">
-            <input
-                type="text"
-                id="search-input"
-                class="search-input"
-                placeholder="Search by name, code, or category..."
-                oninput="filterTable()"
-            >
+            <input type="text" id="search-input" class="search-input"
+                placeholder="Search by name, code, or category..." oninput="filterTable()">
             <select id="filter-status" class="filter-select" onchange="filterTable()">
-                <option value="" data-i18n="inv_filter_all_status">All Statuses</option>
-                <option value="new"  data-i18n="inv_status_new">New</option>
-                <option value="good" data-i18n="inv_status_good">Good</option>
-                <option value="worn" data-i18n="inv_status_worn">Worn</option>
+                <option value="">All Statuses</option>
+                <option value="new">New</option>
+                <option value="good">Good</option>
+                <option value="worn">Worn</option>
             </select>
             <select id="filter-category" class="filter-select" onchange="filterTable()">
-                <option value="" data-i18n="inv_filter_all_cat">All Categories</option>
+                <option value="">All Categories</option>
             </select>
-            <button id="add-btn" class="btn btn-primary" onclick="openAddModal()" style="display:none" data-i18n="inv_add">
+            <button id="add-btn" class="btn btn-primary" onclick="openAddModal()" style="display:none">
                 + Add Item
             </button>
         </div>
@@ -284,81 +299,122 @@
             <table class="inv-table">
                 <thead>
                     <tr>
-                        <th data-i18n="inv_col_code">Code</th>
-                        <th data-i18n="inv_col_name">Name</th>
-                        <th data-i18n="inv_col_category">Category</th>
-                        <th data-i18n="inv_col_qty">Qty</th>
-                        <th data-i18n="inv_col_status">Status</th>
-                        <th data-i18n="inv_col_location">Location</th>
-                        <th data-i18n="inv_col_responsible">Responsible</th>
-                        <th data-i18n="inv_col_actions">Actions</th>
+                        <th>Code</th>
+                        <th>Name</th>
+                        <th>Category</th>
+                        <th>Qty</th>
+                        <th>Status</th>
+                        <th>Location</th>
+                        <th>Responsible</th>
+                        <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="inv-tbody">
-                    <tr><td colspan="8" style="text-align:center;color:#718096;" data-i18n="inv_loading">Loading...</td></tr>
+                    <tr><td colspan="8" style="text-align:center;color:#718096;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
     </main>
 </div>
 
-<!-- Add / Edit Modal -->
+<!-- ══════════════ Add / Edit Modal ══════════════ -->
 <div class="modal-overlay" id="item-modal">
     <div class="modal">
-        <h3 id="modal-title" data-i18n="inv_modal_add_title">Add Inventory Item</h3>
+        <h3 id="modal-title">Add Inventory Item</h3>
         <div class="form-row">
             <div class="form-group">
-                <label data-i18n="inv_field_name">Name</label>
+                <label>Name</label>
                 <input type="text" id="field-name" placeholder="Banner UVT">
             </div>
             <div class="form-group">
-                <label data-i18n="inv_field_category">Category</label>
+                <label>Category</label>
                 <input type="text" id="field-category" placeholder="Banner">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label data-i18n="inv_field_code">Inventory Code</label>
+                <label>Inventory Code</label>
                 <input type="text" id="field-code" placeholder="INV-001">
             </div>
             <div class="form-group">
-                <label data-i18n="inv_field_qty">Quantity</label>
+                <label>Quantity</label>
                 <input type="number" id="field-qty" min="0" value="1">
             </div>
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label data-i18n="inv_field_status">Status</label>
+                <label>Status</label>
                 <select id="field-status">
-                    <option value="new"  data-i18n="inv_status_new">New</option>
-                    <option value="good" data-i18n="inv_status_good">Good</option>
-                    <option value="worn" data-i18n="inv_status_worn">Worn</option>
+                    <option value="new">New</option>
+                    <option value="good">Good</option>
+                    <option value="worn">Worn</option>
                 </select>
             </div>
             <div class="form-group">
-                <label data-i18n="inv_field_location">Location</label>
+                <label>Location</label>
                 <input type="text" id="field-location" placeholder="Depozit A">
             </div>
         </div>
         <div class="form-group">
-            <label data-i18n="inv_field_responsible">Responsible Person</label>
+            <label>Responsible Person</label>
             <input type="text" id="field-responsible" placeholder="Andrei Popescu">
         </div>
         <div class="error-msg" id="modal-error"></div>
         <div class="modal-actions">
-            <button class="btn btn-cancel" onclick="closeModal()" data-i18n="btn_cancel">Cancel</button>
-            <button class="btn btn-primary" id="modal-submit-btn" onclick="submitModal()" data-i18n="btn_create">Create</button>
+            <button class="btn btn-cancel" onclick="closeModal()">Cancel</button>
+            <button class="btn btn-primary" id="modal-submit-btn" onclick="submitModal()">Create</button>
         </div>
     </div>
 </div>
 
-<!-- Delete Confirm -->
+<!-- ══════════════ Loan Modal ══════════════ -->
+<div class="modal-overlay" id="loan-modal">
+    <div class="modal">
+        <h3>📦 Loan Item</h3>
+        <div class="loan-item-info">
+            <strong id="loan-item-name">—</strong>
+            <span id="loan-item-meta">—</span>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quantity <span style="color:#e53e3e">*</span></label>
+                <input type="number" id="loan-qty" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>Checkout Date <span style="color:#e53e3e">*</span></label>
+                <input type="date" id="loan-checkout">
+            </div>
+        </div>
+        <div class="form-group">
+            <label>Return Deadline <span style="color:#e53e3e">*</span></label>
+            <input type="date" id="loan-deadline">
+        </div>
+        <div class="form-group">
+            <label>Photo at Checkout <span style="color:#e53e3e">*</span></label>
+            <div class="photo-upload-area" id="loan-photo-area"
+                onclick="document.getElementById('loan-photo-input').click()">
+                <span style="font-size:28px">📷</span>
+                <p id="loan-photo-label">Click to upload a photo</p>
+                <img id="loan-photo-preview" class="photo-preview" alt="preview">
+            </div>
+            <input type="file" id="loan-photo-input" accept="image/*"
+                style="display:none" onchange="handlePhotoUpload(event)">
+        </div>
+        <div class="error-msg" id="loan-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeLoanModal()">Cancel</button>
+            <button class="btn btn-loan" onclick="submitLoan()">✓ Confirm Loan</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Delete Confirm ══════════════ -->
 <div class="confirm-overlay" id="confirm-overlay">
     <div class="confirm-box">
         <p id="confirm-text"></p>
         <div class="confirm-actions">
-            <button class="btn btn-cancel" onclick="closeConfirm()" data-i18n="btn_cancel">Cancel</button>
-            <button class="btn btn-danger" onclick="confirmDelete()" data-i18n="btn_delete">Delete</button>
+            <button class="btn btn-cancel" onclick="closeConfirm()">Cancel</button>
+            <button class="btn btn-danger" onclick="confirmDelete()">Delete</button>
         </div>
     </div>
 </div>
@@ -367,25 +423,26 @@
 
 <script src="/static/langAndDarkMode.js"></script>
 <script>
-    let currentRole = null;
-    let editingItemId = null;
+    let currentRole    = null;
+    let currentUserId  = null;
+    let editingItemId  = null;
     let deletingItemId = null;
+    let loaningItemId  = null;
+    let loanPhotoBase64 = null;
     let allItems = [];
 
-    // Auth guard + sidebar setup
     async function initPage() {
         try {
             const res = await fetch("/me");
             if (!res.ok) { window.location.href = "/"; return; }
             const user = await res.json();
-            currentRole = user.role;
+            currentRole   = user.role;
+            currentUserId = user.id;
             applySidebar(user);
             applyRoleUI();
             await loadInventory();
             loadBadges();
-        } catch (_) {
-            window.location.href = "/";
-        }
+        } catch (_) { window.location.href = "/"; }
     }
 
     async function loadBadges() {
@@ -423,11 +480,10 @@
     }
 
     function applyRoleUI() {
-        const canCreate = ["SuperAdmin", "Admin"].includes(currentRole);
-        document.getElementById("add-btn").style.display = canCreate ? "" : "none";
+        document.getElementById("add-btn").style.display =
+            ["SuperAdmin", "Admin"].includes(currentRole) ? "" : "none";
     }
 
-    // --- Load inventory ---
     async function loadInventory() {
         try {
             const res = await fetch("/inventory/");
@@ -444,98 +500,90 @@
     function populateCategoryFilter() {
         const select = document.getElementById("filter-category");
         const current = select.value;
-        const t = window.i18n && window.i18n[currentLang] || {};
         const categories = [...new Set(allItems.map(i => i.category))].sort();
-        select.innerHTML = `<option value="">${t.inv_filter_all_cat || "All Categories"}</option>`;
+        select.innerHTML = `<option value="">All Categories</option>`;
         categories.forEach(cat => {
             const opt = document.createElement("option");
-            opt.value = cat;
-            opt.textContent = cat;
+            opt.value = cat; opt.textContent = cat;
             if (cat === current) opt.selected = true;
             select.appendChild(opt);
         });
     }
 
-    // --- Filter / search ---
     function filterTable() {
         const q = document.getElementById("search-input").value.toLowerCase();
-        const statusFilter   = document.getElementById("filter-status").value;
-        const categoryFilter = document.getElementById("filter-category").value;
-        const filtered = allItems.filter(item => {
-            const matchText = !q ||
-                item.name.toLowerCase().includes(q) ||
-                item.inventory_code.toLowerCase().includes(q) ||
-                item.category.toLowerCase().includes(q);
-            const matchStatus   = !statusFilter   || item.status   === statusFilter;
-            const matchCategory = !categoryFilter || item.category === categoryFilter;
-            return matchText && matchStatus && matchCategory;
-        });
+        const sf = document.getElementById("filter-status").value;
+        const cf = document.getElementById("filter-category").value;
+        const filtered = allItems.filter(item =>
+            (!q || item.name.toLowerCase().includes(q) ||
+                   item.inventory_code.toLowerCase().includes(q) ||
+                   item.category.toLowerCase().includes(q)) &&
+            (!sf || item.status === sf) &&
+            (!cf || item.category === cf)
+        );
         renderTable(filtered);
     }
 
     function renderTable(items) {
         const tbody = document.getElementById("inv-tbody");
         if (!items.length) {
-            const t = window.i18n && window.i18n[currentLang] || {};
-            const msg = t.inv_empty || "No items found.";
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#718096;">${msg}</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#718096;">No items found.</td></tr>`;
             return;
         }
-        const canEdit   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
+
+        // SuperAdmin / Admin → Edit + Delete
+        // Coordinator        → Loan button only
+        // Vizualizator       → read-only dash
+        const canEdit   = ["SuperAdmin", "Admin"].includes(currentRole);
         const canDelete = ["SuperAdmin", "Admin"].includes(currentRole);
-        const t = window.i18n && window.i18n[currentLang] || {};
+        const canLoan   = currentRole === "Coordinator";
+
+        const statusMap = { new: "New", good: "Good", worn: "Worn" };
 
         tbody.innerHTML = items.map(item => `
             <tr>
-                <td><code style="font-size:12px;background:var(--hover-bg,#f0f4f8);padding:2px 6px;border-radius:4px;">${escHtml(item.inventory_code)}</code></td>
-                <td>${escHtml(item.name)}</td>
-                <td>${escHtml(item.category)}</td>
+                <td><code style="font-size:12px;background:var(--hover-bg,#f0f4f8);padding:2px 6px;border-radius:4px;">${esc(item.inventory_code)}</code></td>
+                <td>${esc(item.name)}</td>
+                <td>${esc(item.category)}</td>
                 <td>${item.quantity}</td>
-                <td><span class="status-badge status-${item.status}">${statusLabel(item.status)}</span></td>
-                <td>${escHtml(item.location)}</td>
-                <td>${escHtml(item.responsible_person)}</td>
+                <td><span class="status-badge status-${item.status}">${statusMap[item.status] || item.status}</span></td>
+                <td>${esc(item.location)}</td>
+                <td>${esc(item.responsible_person)}</td>
                 <td style="white-space:nowrap;">
-                    ${canEdit   ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">${t.btn_edit   || "Edit"}</button>` : ""}
-                    ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">${t.btn_delete || "Delete"}</button>` : ""}
-                    ${!canEdit && !canDelete ? '<span style="color:#718096;font-size:13px;">—</span>' : ""}
+                    ${canEdit   ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>` : ""}
+                    ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">Delete</button>` : ""}
+                    ${canLoan   ? `<button class="btn btn-loan"   onclick="openLoanModal(${item.id})">📦 Loan</button>` : ""}
+                    ${!canEdit && !canDelete && !canLoan ? '<span style="color:#718096;font-size:13px;">—</span>' : ""}
                 </td>
             </tr>
         `).join("");
     }
 
-    function statusLabel(status) {
-        const t = window.i18n && window.i18n[currentLang] || {};
-        const map = { new: t.inv_status_new || "New", good: t.inv_status_good || "Good", worn: t.inv_status_worn || "Worn" };
-        return map[status] || status;
+    function esc(s) {
+        return String(s ?? "")
+            .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+            .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
     }
 
-    function escHtml(str) {
-        return String(str ?? "")
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;");
-    }
-
-    // --- Add Modal ---
+    // ── Add / Edit Modal ───────────────────────────────────────────────
     function openAddModal() {
         editingItemId = null;
-        const t = window.i18n && window.i18n[currentLang] || {};
-        document.getElementById("modal-title").textContent = t.inv_modal_add_title || "Add Inventory Item";
-        document.getElementById("modal-submit-btn").textContent = t.btn_create || "Create";
-        clearForm();
+        document.getElementById("modal-title").textContent = "Add Inventory Item";
+        document.getElementById("modal-submit-btn").textContent = "Create";
+        ["field-name","field-category","field-code","field-location","field-responsible"]
+            .forEach(id => document.getElementById(id).value = "");
+        document.getElementById("field-qty").value    = "1";
+        document.getElementById("field-status").value = "new";
         document.getElementById("modal-error").textContent = "";
         document.getElementById("item-modal").classList.add("open");
     }
 
-    // --- Edit Modal ---
     function openEditModal(id) {
         const item = allItems.find(i => i.id === id);
         if (!item) return;
         editingItemId = id;
-        const t = window.i18n && window.i18n[currentLang] || {};
-        document.getElementById("modal-title").textContent = t.inv_modal_edit_title || "Edit Inventory Item";
-        document.getElementById("modal-submit-btn").textContent = t.btn_save || "Save";
+        document.getElementById("modal-title").textContent = "Edit Inventory Item";
+        document.getElementById("modal-submit-btn").textContent = "Save";
         document.getElementById("field-name").value        = item.name;
         document.getElementById("field-category").value    = item.category;
         document.getElementById("field-code").value        = item.inventory_code;
@@ -547,21 +595,8 @@
         document.getElementById("item-modal").classList.add("open");
     }
 
-    function clearForm() {
-        document.getElementById("field-name").value        = "";
-        document.getElementById("field-category").value    = "";
-        document.getElementById("field-code").value        = "";
-        document.getElementById("field-qty").value         = "1";
-        document.getElementById("field-status").value      = "new";
-        document.getElementById("field-location").value    = "";
-        document.getElementById("field-responsible").value = "";
-    }
+    function closeModal() { document.getElementById("item-modal").classList.remove("open"); }
 
-    function closeModal() {
-        document.getElementById("item-modal").classList.remove("open");
-    }
-
-    // --- Submit Add / Edit ---
     async function submitModal() {
         const name        = document.getElementById("field-name").value.trim();
         const category    = document.getElementById("field-category").value.trim();
@@ -571,16 +606,13 @@
         const location    = document.getElementById("field-location").value.trim();
         const responsible = document.getElementById("field-responsible").value.trim();
         const errEl       = document.getElementById("modal-error");
-        const t           = window.i18n && window.i18n[currentLang] || {};
         errEl.textContent = "";
 
         if (!name || !category || !code || !location || !responsible) {
-            errEl.textContent = t.inv_err_required || "All fields are required.";
-            return;
+            errEl.textContent = "All fields are required."; return;
         }
         if (isNaN(qty) || qty < 0) {
-            errEl.textContent = t.inv_err_qty || "Quantity must be ≥ 0.";
-            return;
+            errEl.textContent = "Quantity must be ≥ 0."; return;
         }
 
         const body   = { name, category, inventory_code: code, quantity: qty, status, location, responsible_person: responsible };
@@ -588,32 +620,106 @@
         const method = editingItemId === null ? "POST" : "PUT";
 
         try {
-            const res = await fetch(url, {
-                method,
+            const res  = await fetch(url, { method, headers: {"Content-Type":"application/json"}, body: JSON.stringify(body) });
+            const data = await res.json();
+            if (!res.ok) { errEl.textContent = data.detail || "An error occurred."; return; }
+            closeModal();
+            showToast(editingItemId === null ? "Item created." : "Item updated.");
+            await loadInventory();
+        } catch (_) { errEl.textContent = "Server error. Try again."; }
+    }
+
+    // ── Loan Modal ─────────────────────────────────────────────────────
+    function openLoanModal(id) {
+        const item = allItems.find(i => i.id === id);
+        if (!item) return;
+        loaningItemId   = id;
+        loanPhotoBase64 = null;
+
+        document.getElementById("loan-item-name").textContent = item.name;
+        document.getElementById("loan-item-meta").textContent =
+            `${item.inventory_code} · ${item.category} · Available: ${item.quantity}`;
+
+        document.getElementById("loan-qty").value = "1";
+        document.getElementById("loan-qty").max   = item.quantity;
+
+        const today    = new Date();
+        const deadline = new Date(today);
+        deadline.setDate(deadline.getDate() + 7);
+        document.getElementById("loan-checkout").value = toDateInput(today);
+        document.getElementById("loan-deadline").value = toDateInput(deadline);
+
+        document.getElementById("loan-photo-label").textContent = "Click to upload a photo";
+        document.getElementById("loan-photo-preview").style.display = "none";
+        document.getElementById("loan-photo-area").classList.remove("has-photo");
+        document.getElementById("loan-photo-input").value = "";
+        document.getElementById("loan-error").textContent = "";
+        document.getElementById("loan-modal").classList.add("open");
+    }
+
+    function toDateInput(d) { return d.toISOString().slice(0, 10); }
+
+    function closeLoanModal() {
+        document.getElementById("loan-modal").classList.remove("open");
+        loaningItemId = null; loanPhotoBase64 = null;
+    }
+
+    function handlePhotoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            loanPhotoBase64 = e.target.result;
+            const preview = document.getElementById("loan-photo-preview");
+            preview.src = loanPhotoBase64;
+            preview.style.display = "block";
+            document.getElementById("loan-photo-label").textContent = file.name;
+            document.getElementById("loan-photo-area").classList.add("has-photo");
+        };
+        reader.readAsDataURL(file);
+    }
+
+    async function submitLoan() {
+        const errEl    = document.getElementById("loan-error");
+        errEl.textContent = "";
+        const qty      = parseInt(document.getElementById("loan-qty").value, 10);
+        const checkout = document.getElementById("loan-checkout").value;
+        const deadline = document.getElementById("loan-deadline").value;
+
+        if (!qty || qty < 1)          { errEl.textContent = "Quantity must be at least 1."; return; }
+        if (!checkout)                 { errEl.textContent = "Checkout date is required."; return; }
+        if (!deadline)                 { errEl.textContent = "Return deadline is required."; return; }
+        if (deadline <= checkout)      { errEl.textContent = "Deadline must be after checkout date."; return; }
+        if (!loanPhotoBase64)          { errEl.textContent = "A checkout photo is required."; return; }
+
+        const body = {
+            inventory_id:   loaningItemId,
+            user_id:        currentUserId,
+            quantity:       qty,
+            deadline_date:  new Date(deadline + "T23:59:59").toISOString(),
+            photo_checkout: loanPhotoBase64,
+        };
+
+        try {
+            const res  = await fetch("/loans/", {
+                method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify(body),
             });
             const data = await res.json();
-            if (!res.ok) {
-                errEl.textContent = data.detail || "An error occurred.";
-                return;
-            }
-            closeModal();
-            showToast(editingItemId === null ? "inv_toast_created" : "inv_toast_updated");
+            if (!res.ok) { errEl.textContent = data.detail || "Could not create loan."; return; }
+            closeLoanModal();
+            showToast("Loan created successfully.");
             await loadInventory();
-        } catch (_) {
-            errEl.textContent = "Server error. Try again.";
-        }
+        } catch (_) { errEl.textContent = "Server error. Try again."; }
     }
 
-    // --- Delete ---
+    // ── Delete ─────────────────────────────────────────────────────────
     function askDelete(id) {
         const item = allItems.find(i => i.id === id);
-        const name = item ? item.name : `#${id}`;
         deletingItemId = id;
-        const t = window.i18n && window.i18n[currentLang] || {};
-        const msg = t.inv_del_confirm || "Delete this item? This cannot be undone.";
-        document.getElementById("confirm-text").textContent = `"${name}" — ${msg}`;
+        document.getElementById("confirm-text").textContent =
+            `"${item ? item.name : "#"+id}" — Delete this item? This cannot be undone.`;
         document.getElementById("confirm-overlay").classList.add("open");
     }
 
@@ -625,53 +731,26 @@
     async function confirmDelete() {
         if (!deletingItemId) return;
         try {
-            const res = await fetch(`/inventory/${deletingItemId}`, { method: "DELETE" });
+            const res  = await fetch(`/inventory/${deletingItemId}`, { method: "DELETE" });
             const data = await res.json();
             if (!res.ok) { alert(data.detail || "Could not delete item."); return; }
             closeConfirm();
-            showToast("inv_toast_deleted");
+            showToast("Item deleted.");
             await loadInventory();
-        } catch (_) {
-            alert("Server error. Try again.");
-        }
+        } catch (_) { alert("Server error. Try again."); }
     }
 
-    // --- Toast ---
-    function showToast(key) {
-        const t = window.i18n && window.i18n[currentLang] || {};
-        const msg = t[key] || key;
+    // ── Toast ──────────────────────────────────────────────────────────
+    function showToast(msg) {
         const el = document.getElementById("toast-success");
         el.textContent = msg;
         el.style.display = "block";
         setTimeout(() => { el.style.display = "none"; }, 3000);
     }
 
-    // --- Logout ---
     async function logout() {
         await fetch("/logout/", { method: "POST" });
         window.location.href = "/";
-    }
-
-    // Re-render table and update placeholder when language changes
-    document.addEventListener("DOMContentLoaded", () => {
-        const langToggleBtn = document.getElementById("lang-toggle");
-        if (langToggleBtn) {
-            langToggleBtn.addEventListener("click", () => {
-                // currentLang is updated by langAndDarkMode.js; run after its handler
-                setTimeout(() => {
-                    updateSearchPlaceholder();
-                    populateCategoryFilter();
-                    filterTable();
-                }, 0);
-            });
-        }
-        updateSearchPlaceholder();
-    });
-
-    function updateSearchPlaceholder() {
-        const t = window.i18n && window.i18n[currentLang] || {};
-        const el = document.getElementById("search-input");
-        if (el && t.inv_search_placeholder) el.placeholder = t.inv_search_placeholder;
     }
 
     initPage();

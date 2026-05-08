@@ -1,14 +1,827 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/home.css">
-        <title>Reports</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>WELCOME TO UVT BRANDING APP</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reports – UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+    <style>
+        /* ── Toolbar ── */
+        .toolbar {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .filter-select {
+            padding: 10px 14px;
+            border: 1px solid var(--border, #cbd5e0);
+            border-radius: 8px;
+            font-size: 14px;
+            background: var(--card-bg, #fff);
+            color: var(--text-color, #1a202c);
+            cursor: pointer;
+            font-weight: 500;
+        }
+        .filter-select:focus { outline: none; border-color: #0057a8; }
+        .toolbar-label {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--text-muted, #718096);
+        }
+
+        /* ── KPI Grid ── */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .kpi-card {
+            background: var(--card-bg, #fff);
+            border-radius: 12px;
+            padding: 20px 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .kpi-card h3 {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted, #718096);
+            margin: 0;
+        }
+        .kpi-card .value {
+            font-size: 32px;
+            font-weight: 800;
+            color: var(--text-color, #1a202c);
+            line-height: 1.1;
+        }
+        .kpi-card p {
+            font-size: 12px;
+            color: var(--text-muted, #718096);
+            margin: 0;
+        }
+        .text-success { color: #38a169; }
+        .text-warning { color: #d97706; }
+        .text-danger  { color: #e53e3e; }
+        .text-info    { color: #3182ce; }
+
+        /* ── Section heading ── */
+        .section-title {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.07em;
+            color: var(--text-muted, #718096);
+            margin: 0 0 14px;
+        }
+
+        /* ── Two-column layout ── */
+        .reports-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-bottom: 24px;
+        }
+        @media (max-width: 900px) { .reports-grid { grid-template-columns: 1fr; } }
+
+        /* ── Card ── */
+        .report-card {
+            background: var(--card-bg, #fff);
+            border-radius: 12px;
+            padding: 20px 24px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+        }
+        .report-card.full-width {
+            grid-column: 1 / -1;
+        }
+
+        /* ── Timeline chart ── */
+        .timeline-wrap {
+            height: 120px;
+            position: relative;
+            overflow: hidden;
+        }
+        #timeline-svg {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* ── Bar chart ── */
+        .bar-chart { display: flex; flex-direction: column; gap: 10px; }
+        .bar-row { display: flex; align-items: center; gap: 10px; }
+        .bar-label {
+            width: 140px;
+            min-width: 100px;
+            font-size: 13px;
+            color: var(--text-color, #1a202c);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 10px;
+            background: var(--hover-bg, #f0f4f8);
+            border-radius: 999px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 999px;
+            background: #0057a8;
+            transition: width 0.6s cubic-bezier(.22,1,.36,1);
+        }
+        .bar-count {
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-muted, #718096);
+            width: 28px;
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        /* ── Donut ── */
+        .donut-wrap {
+            display: flex;
+            align-items: center;
+            gap: 24px;
+            flex-wrap: wrap;
+        }
+        #donut-svg { flex-shrink: 0; }
+        .donut-legend { display: flex; flex-direction: column; gap: 8px; }
+        .legend-item { display: flex; align-items: center; gap: 8px; font-size: 13px; }
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        /* ── Table ── */
+        .rpt-table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        .rpt-table th,
+        .rpt-table td {
+            padding: 10px 12px;
+            text-align: left;
+            border-bottom: 1px solid var(--border, #e2e8f0);
+            font-size: 13px;
+        }
+        .rpt-table th {
+            font-size: 11px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted, #718096);
+        }
+        .rpt-table tr:last-child td { border-bottom: none; }
+        .rpt-table tr:hover td { background: var(--hover-bg, #f0f4f8); }
+        .rpt-table tbody tr { transition: background 0.15s; }
+        .badge-overdue {
+            display: inline-block;
+            background: #fee2e2;
+            color: #b91c1c;
+            font-size: 11px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 999px;
+        }
+        .badge-rank {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 22px;
+            height: 22px;
+            border-radius: 50%;
+            font-size: 11px;
+            font-weight: 800;
+            background: var(--hover-bg, #f0f4f8);
+            color: var(--text-muted, #718096);
+        }
+        .badge-rank.gold   { background: #fef9c3; color: #854d0e; }
+        .badge-rank.silver { background: #f1f5f9; color: #475569; }
+        .badge-rank.bronze { background: #fef3c7; color: #78350f; }
+
+        /* ── Empty / loading states ── */
+        .empty-state {
+            text-align: center;
+            padding: 32px;
+            color: var(--text-muted, #718096);
+            font-size: 14px;
+        }
+        .loading-pulse {
+            display: inline-block;
+            width: 100%;
+            height: 16px;
+            border-radius: 6px;
+            background: linear-gradient(90deg, var(--hover-bg,#f0f4f8) 25%, var(--border,#e2e8f0) 50%, var(--hover-bg,#f0f4f8) 75%);
+            background-size: 200% 100%;
+            animation: pulse 1.5s infinite;
+        }
+        @keyframes pulse {
+            0%   { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Export button ── */
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-primary { background: #0057a8; color: #fff; }
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--border, #cbd5e0);
+            color: var(--text-color, #1a202c);
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-placeholder">UVT</div>
+            <h2 data-i18n="app_title">Branding App</h2>
         </div>
-    </body>
+        <nav class="sidebar-nav">
+            <span class="nav-section" data-i18n="nav_section_modules">MODULES</span>
+
+            <a href="/home" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                <span class="icon">📊</span>
+                <span data-i18n="nav_dashboard">Dashboard</span>
+            </a>
+            <a href="/inventory" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
+                <span class="icon">📦</span>
+                <span data-i18n="nav_inventory">Inventory</span>
+            </a>
+            <a href="/loans" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">↔️</span>
+                <span data-i18n="nav_loans">Loans</span>
+                <span class="badge red" id="badge-loans"></span>
+            </a>
+            <a href="/handover" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">🔄</span>
+                <span data-i18n="nav_handover">Handover</span>
+            </a>
+
+            <span class="nav-section" data-i18n="nav_section_reports">REPORTS</span>
+
+            <a href="/reports" class="nav-item active" data-roles="SuperAdmin,Admin">
+                <span class="icon">📈</span>
+                <span data-i18n="nav_reports">Reports</span>
+            </a>
+            <a href="/notifications" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
+                <span class="icon">🔔</span>
+                <span data-i18n="nav_notifications">Notifications</span>
+                <span class="badge red" id="badge-notifs"></span>
+            </a>
+
+            <span class="nav-section" data-i18n="nav_section_admin">ADMIN</span>
+
+            <a href="/admin" class="nav-item" data-roles="SuperAdmin">
+                <span class="icon">👥</span>
+                <span data-i18n="nav_users">User Management</span>
+            </a>
+        </nav>
+
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="user-initials">?</div>
+            <div class="user-info">
+                <strong id="user-name">Loading...</strong>
+                <span id="user-role-label"></span>
+            </div>
+            <button title="Logout" onclick="logout()" style="
+                background:none;border:none;cursor:pointer;
+                font-size:18px;margin-left:auto;opacity:0.55;
+                padding:4px;line-height:1;">⏏</button>
+        </div>
+    </aside>
+
+    <!-- ════════ MAIN ════════ -->
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Reports</h1>
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider">
+                        <span class="moon-icon">🌙</span>
+                        <span class="sun-icon">☀️</span>
+                        <span class="slider-knob"></span>
+                    </span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+        </header>
+
+        <!-- Period picker -->
+        <div class="toolbar">
+            <span class="toolbar-label">Period:</span>
+            <select id="period-select" class="filter-select" onchange="loadAll()">
+                <option value="week">Last 7 days</option>
+                <option value="month" selected>Last 30 days</option>
+                <option value="quarter">Last 90 days</option>
+                <option value="year">Last year</option>
+                <option value="all">All time</option>
+            </select>
+            <button class="btn btn-outline" onclick="exportCSV()" style="margin-left:auto;">⬇ Export CSV</button>
+        </div>
+
+        <!-- KPI row -->
+        <div class="kpi-grid">
+            <div class="kpi-card">
+                <h3>Total Items</h3>
+                <div class="value" id="kpi-total">—</div>
+                <p>in inventory</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Loans (period)</h3>
+                <div class="value text-info" id="kpi-loans">—</div>
+                <p>checkouts</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Active Loans</h3>
+                <div class="value text-warning" id="kpi-active">—</div>
+                <p>currently out</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Returned</h3>
+                <div class="value text-success" id="kpi-returned">—</div>
+                <p>this period</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Overdue</h3>
+                <div class="value text-danger" id="kpi-overdue">—</div>
+                <p>past deadline</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Deteriorated</h3>
+                <div class="value text-danger" id="kpi-deteriorated">—</div>
+                <p>flagged items</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Users</h3>
+                <div class="value" id="kpi-users">—</div>
+                <p>registered</p>
+            </div>
+            <div class="kpi-card">
+                <h3>Low Stock</h3>
+                <div class="value text-warning" id="kpi-low">—</div>
+                <p>qty &lt; 20</p>
+            </div>
+        </div>
+
+        <!-- Row 1: Timeline + Inventory status donut -->
+        <div class="reports-grid">
+
+            <div class="report-card full-width">
+                <p class="section-title">Loan Activity — Timeline</p>
+                <div class="timeline-wrap">
+                    <svg id="timeline-svg" preserveAspectRatio="none"></svg>
+                </div>
+                <div id="timeline-labels" style="display:flex;justify-content:space-between;font-size:11px;color:var(--text-muted,#718096);margin-top:6px;"></div>
+            </div>
+
+            <!-- Loans by category bar -->
+            <div class="report-card">
+                <p class="section-title">Loans by Category</p>
+                <div class="bar-chart" id="category-bars">
+                    <div class="empty-state">Loading…</div>
+                </div>
+            </div>
+
+            <!-- Inventory status donut -->
+            <div class="report-card">
+                <p class="section-title">Inventory by Status</p>
+                <div class="donut-wrap" id="donut-wrap">
+                    <div class="empty-state" style="width:100%">Loading…</div>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Row 2: Top items + Top users -->
+        <div class="reports-grid">
+
+            <div class="report-card">
+                <p class="section-title">Top 10 Borrowed Items</p>
+                <table class="rpt-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Item</th>
+                            <th>Category</th>
+                            <th>Loans</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-items-body">
+                        <tr><td colspan="4" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="report-card">
+                <p class="section-title">Most Active Users</p>
+                <table class="rpt-table">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Name</th>
+                            <th>Role</th>
+                            <th>Loans</th>
+                        </tr>
+                    </thead>
+                    <tbody id="top-users-body">
+                        <tr><td colspan="4" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+
+        </div>
+
+        <!-- Row 3: Overdue table (full width) -->
+        <div class="reports-grid">
+            <div class="report-card full-width">
+                <p class="section-title">Overdue Loans</p>
+                <table class="rpt-table">
+                    <thead>
+                        <tr>
+                            <th>Loan #</th>
+                            <th>Item</th>
+                            <th>Borrower</th>
+                            <th>Checked out</th>
+                            <th>Deadline</th>
+                            <th>Days overdue</th>
+                        </tr>
+                    </thead>
+                    <tbody id="overdue-body">
+                        <tr><td colspan="6" class="empty-state">Loading…</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+    </main>
+</div>
+
+<script src="/static/langAndDarkMode.js"></script>
+<script>
+// ─── State ────────────────────────────────────────────────────────────
+let summaryData   = {};
+let timelineData  = [];
+let categoryData  = [];
+let topItemsData  = [];
+let topUsersData  = [];
+let overdueData   = [];
+let statusData    = [];
+
+// ─── Init ─────────────────────────────────────────────────────────────
+async function initPage() {
+    try {
+        const res = await fetch("/me");
+        if (!res.ok) { window.location.href = "/"; return; }
+        const user = await res.json();
+        applySidebar(user);
+        if (!["SuperAdmin", "Admin"].includes(user.role)) {
+            window.location.href = "/home";
+            return;
+        }
+    } catch (_) {
+        window.location.href = "/";
+        return;
+    }
+    await loadAll();
+}
+
+function period() { return document.getElementById("period-select").value; }
+
+async function loadAll() {
+    const p = period();
+    await Promise.all([
+        loadSummary(p),
+        loadTimeline(p),
+        loadCategories(p),
+        loadTopItems(p),
+        loadTopUsers(p),
+        loadOverdue(),
+        loadInventoryStatus(),
+    ]);
+}
+
+// ─── API fetchers ──────────────────────────────────────────────────────
+async function loadSummary(p) {
+    try {
+        const r = await fetch(`/reports/summary?period=${p}`);
+        if (!r.ok) return;
+        summaryData = await r.json();
+        document.getElementById("kpi-total").textContent       = summaryData.total_items;
+        document.getElementById("kpi-loans").textContent       = summaryData.total_loans;
+        document.getElementById("kpi-active").textContent      = summaryData.active_loans;
+        document.getElementById("kpi-returned").textContent    = summaryData.returned_loans;
+        document.getElementById("kpi-overdue").textContent     = summaryData.overdue_loans;
+        document.getElementById("kpi-deteriorated").textContent = summaryData.deteriorated_items;
+        document.getElementById("kpi-users").textContent       = summaryData.total_users;
+        document.getElementById("kpi-low").textContent         = summaryData.low_stock_items;
+    } catch (_) {}
+}
+
+async function loadTimeline(p) {
+    try {
+        const r = await fetch(`/reports/loan-timeline?period=${p}`);
+        if (!r.ok) return;
+        timelineData = await r.json();
+        renderTimeline(timelineData);
+    } catch (_) {}
+}
+
+async function loadCategories(p) {
+    try {
+        const r = await fetch(`/reports/by-category?period=${p}`);
+        if (!r.ok) return;
+        categoryData = await r.json();
+        renderCategoryBars(categoryData);
+    } catch (_) {}
+}
+
+async function loadTopItems(p) {
+    try {
+        const r = await fetch(`/reports/top-items?period=${p}&limit=10`);
+        if (!r.ok) return;
+        topItemsData = await r.json();
+        renderTopItems(topItemsData);
+    } catch (_) {}
+}
+
+async function loadTopUsers(p) {
+    try {
+        const r = await fetch(`/reports/user-activity?period=${p}&limit=10`);
+        if (!r.ok) return;
+        topUsersData = await r.json();
+        renderTopUsers(topUsersData);
+    } catch (_) {}
+}
+
+async function loadOverdue() {
+    try {
+        const r = await fetch("/reports/overdue-list");
+        if (!r.ok) return;
+        overdueData = await r.json();
+        renderOverdue(overdueData);
+    } catch (_) {}
+}
+
+async function loadInventoryStatus() {
+    try {
+        const r = await fetch("/reports/inventory-status");
+        if (!r.ok) return;
+        statusData = await r.json();
+        renderDonut(statusData);
+    } catch (_) {}
+}
+
+// ─── Renderers ────────────────────────────────────────────────────────
+
+function renderTimeline(data) {
+    const svg = document.getElementById("timeline-svg");
+    const labels = document.getElementById("timeline-labels");
+    if (!data || !data.length) { svg.innerHTML = ""; return; }
+
+    const W = 1000, H = 120, PAD = 8;
+    const counts = data.map(d => d.count);
+    const max = Math.max(...counts, 1);
+    const step = (W - PAD * 2) / (data.length - 1 || 1);
+
+    const pts = data.map((d, i) => {
+        const x = PAD + i * step;
+        const y = H - PAD - ((d.count / max) * (H - PAD * 2));
+        return `${x},${y}`;
+    });
+
+    const area = `M ${pts[0]} ` + pts.slice(1).map(p => `L ${p}`).join(" ")
+        + ` L ${PAD + (data.length - 1) * step},${H - PAD} L ${PAD},${H - PAD} Z`;
+    const line = `M ${pts[0]} ` + pts.slice(1).map(p => `L ${p}`).join(" ");
+
+    svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+    svg.innerHTML = `
+        <defs>
+            <linearGradient id="tl-grad" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stop-color="#0057a8" stop-opacity="0.25"/>
+                <stop offset="100%" stop-color="#0057a8" stop-opacity="0.02"/>
+            </linearGradient>
+        </defs>
+        <path d="${area}" fill="url(#tl-grad)"/>
+        <path d="${line}" fill="none" stroke="#0057a8" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/>
+    `;
+
+    // Labels: show ~5 evenly spaced dates
+    const labelCount = Math.min(5, data.length);
+    const step2 = Math.floor((data.length - 1) / (labelCount - 1 || 1));
+    labels.innerHTML = "";
+    for (let i = 0; i < labelCount; i++) {
+        const idx = Math.min(i * step2, data.length - 1);
+        const span = document.createElement("span");
+        span.textContent = formatDate(data[idx].date);
+        labels.appendChild(span);
+    }
+}
+
+function renderCategoryBars(data) {
+    const el = document.getElementById("category-bars");
+    if (!data || !data.length) {
+        el.innerHTML = '<div class="empty-state">No data for this period.</div>';
+        return;
+    }
+    const max = Math.max(...data.map(d => d.loan_count), 1);
+    el.innerHTML = data.map(d => `
+        <div class="bar-row">
+            <span class="bar-label" title="${esc(d.category)}">${esc(d.category)}</span>
+            <div class="bar-track">
+                <div class="bar-fill" style="width:${(d.loan_count / max * 100).toFixed(1)}%"></div>
+            </div>
+            <span class="bar-count">${d.loan_count}</span>
+        </div>
+    `).join("");
+}
+
+function renderDonut(data) {
+    const wrap = document.getElementById("donut-wrap");
+    if (!data || !data.length) {
+        wrap.innerHTML = '<div class="empty-state" style="width:100%">No data.</div>';
+        return;
+    }
+    const colors = { new: "#3b82f6", good: "#22c55e", worn: "#f59e0b" };
+    const labels = { new: "New", good: "Good", worn: "Worn" };
+    const total  = data.reduce((a, b) => a + b.count, 0) || 1;
+    const R = 54, CX = 60, CY = 60, SIZE = 120;
+    let startAngle = -Math.PI / 2;
+
+    let paths = "";
+    data.forEach(d => {
+        const angle = (d.count / total) * 2 * Math.PI;
+        const x1 = CX + R * Math.cos(startAngle);
+        const y1 = CY + R * Math.sin(startAngle);
+        const x2 = CX + R * Math.cos(startAngle + angle);
+        const y2 = CY + R * Math.sin(startAngle + angle);
+        const large = angle > Math.PI ? 1 : 0;
+        paths += `<path d="M ${CX} ${CY} L ${x1} ${y1} A ${R} ${R} 0 ${large} 1 ${x2} ${y2} Z"
+                       fill="${colors[d.status] || "#94a3b8"}" opacity="0.9"/>`;
+        startAngle += angle;
+    });
+
+    // Hole
+    paths += `<circle cx="${CX}" cy="${CY}" r="30" fill="var(--card-bg,#fff)"/>`;
+
+    const legend = data.map(d => `
+        <div class="legend-item">
+            <div class="legend-dot" style="background:${colors[d.status] || '#94a3b8'}"></div>
+            <span>${labels[d.status] || d.status}: <strong>${d.count}</strong></span>
+        </div>
+    `).join("");
+
+    wrap.innerHTML = `
+        <svg id="donut-svg" width="${SIZE}" height="${SIZE}" viewBox="0 0 ${SIZE} ${SIZE}">${paths}</svg>
+        <div class="donut-legend">${legend}</div>
+    `;
+}
+
+function renderTopItems(data) {
+    const tbody = document.getElementById("top-items-body");
+    if (!data || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No loans this period.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map((d, i) => `
+        <tr>
+            <td><span class="badge-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i + 1}</span></td>
+            <td>
+                ${esc(d.name)}
+                <br><code style="font-size:11px;color:var(--text-muted,#718096)">${esc(d.inventory_code)}</code>
+            </td>
+            <td>${esc(d.category)}</td>
+            <td><strong>${d.loan_count}</strong></td>
+        </tr>
+    `).join("");
+}
+
+function renderTopUsers(data) {
+    const tbody = document.getElementById("top-users-body");
+    if (!data || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">No activity this period.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map((d, i) => `
+        <tr>
+            <td><span class="badge-rank ${i===0?'gold':i===1?'silver':i===2?'bronze':''}">${i + 1}</span></td>
+            <td>${esc(d.full_name || d.email)}</td>
+            <td style="font-size:12px;color:var(--text-muted,#718096)">${esc(d.role)}</td>
+            <td><strong>${d.loan_count}</strong></td>
+        </tr>
+    `).join("");
+}
+
+function renderOverdue(data) {
+    const tbody = document.getElementById("overdue-body");
+    if (!data || !data.length) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty-state">✅ No overdue loans right now.</td></tr>';
+        return;
+    }
+    tbody.innerHTML = data.map(d => `
+        <tr>
+            <td>#${d.loan_id}</td>
+            <td>${esc(d.item_name)}<br><code style="font-size:11px;color:var(--text-muted,#718096)">${esc(d.inventory_code)}</code></td>
+            <td>${esc(d.borrower_name || d.borrower_email)}<br><span style="font-size:11px;color:var(--text-muted,#718096)">${esc(d.borrower_email)}</span></td>
+            <td>${formatDate(d.checkout_date)}</td>
+            <td>${formatDate(d.deadline_date)}</td>
+            <td><span class="badge-overdue">${d.days_overdue}d</span></td>
+        </tr>
+    `).join("");
+}
+
+// ─── Sidebar ───────────────────────────────────────────────────────────
+function applySidebar(user) {
+    const name = user.full_name || user.email;
+    document.getElementById("user-name").textContent = name;
+    document.getElementById("user-role-label").textContent = user.role;
+    if (user.full_name) {
+        const initials = user.full_name.trim().split(/\s+/).map(w => w[0]).join("").slice(0, 2).toUpperCase();
+        document.getElementById("user-initials").textContent = initials;
+    }
+    document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+        el.style.display = el.dataset.roles.split(",").includes(user.role) ? "" : "none";
+    });
+    document.querySelectorAll(".nav-section").forEach(section => {
+        let next = section.nextElementSibling;
+        let hasVisible = false;
+        while (next && !next.classList.contains("nav-section")) {
+            if (next.classList.contains("nav-item") && next.style.display !== "none") { hasVisible = true; break; }
+            next = next.nextElementSibling;
+        }
+        section.style.display = hasVisible ? "" : "none";
+    });
+}
+
+// ─── Export CSV ────────────────────────────────────────────────────────
+function exportCSV() {
+    const rows = [
+        ["Metric", "Value"],
+        ["Total items", summaryData.total_items ?? ""],
+        ["Loans (period)", summaryData.total_loans ?? ""],
+        ["Active loans", summaryData.active_loans ?? ""],
+        ["Returned (period)", summaryData.returned_loans ?? ""],
+        ["Overdue", summaryData.overdue_loans ?? ""],
+        ["Deteriorated", summaryData.deteriorated_items ?? ""],
+        ["Users", summaryData.total_users ?? ""],
+        ["Low stock", summaryData.low_stock_items ?? ""],
+        [],
+        ["--- Top Items ---"],
+        ["Rank", "Code", "Name", "Category", "Loans"],
+        ...topItemsData.map((d, i) => [i + 1, d.inventory_code, d.name, d.category, d.loan_count]),
+        [],
+        ["--- Overdue Loans ---"],
+        ["Loan #", "Item", "Code", "Borrower", "Email", "Checkout", "Deadline", "Days overdue"],
+        ...overdueData.map(d => [d.loan_id, d.item_name, d.inventory_code, d.borrower_name, d.borrower_email, d.checkout_date, d.deadline_date, d.days_overdue]),
+    ];
+    const csv = rows.map(r => r.map(c => `"${String(c ?? "").replace(/"/g, '""')}"`).join(",")).join("\n");
+    const blob = new Blob([csv], { type: "text/csv" });
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    a.download = `uvt-report-${period()}-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────
+function formatDate(iso) {
+    if (!iso) return "—";
+    const d = new Date(iso);
+    return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+}
+function esc(s) {
+    return String(s ?? "")
+        .replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
+}
+
+async function logout() {
+    await fetch("/logout/", { method: "POST" });
+    window.location.href = "/";
+}
+
+// ─── Boot ─────────────────────────────────────────────────────────────
+initPage();
+</script>
+</body>
 </html>

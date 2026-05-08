@@ -1,14 +1,423 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/home.css">
-        <title>Loans</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>WELCOME TO UVT BRANDING APP</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Loans – UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+    <style>
+        .toolbar { display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+        .search-input {
+            flex:1; min-width:200px; padding:10px 14px;
+            border:1px solid var(--border,#cbd5e0); border-radius:8px;
+            font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c);
+        }
+        .search-input:focus { outline:none; border-color:#0057a8; }
+        .filter-select {
+            padding:10px 14px; border:1px solid var(--border,#cbd5e0); border-radius:8px;
+            font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c); cursor:pointer;
+        }
+        .btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; transition:opacity 0.2s; white-space:nowrap; }
+        .btn:hover { opacity:0.85; }
+        .btn-primary    { background:#0057a8; color:#fff; }
+        .btn-cancel     { background:var(--border,#e2e8f0); color:var(--text-color,#1a202c); }
+        .btn-return     { background:#38a169; color:#fff; padding:5px 10px; font-size:12px; font-weight:700; border-radius:7px; border:none; cursor:pointer; }
+        .btn-return:hover { opacity:0.85; }
+        .btn-deteriorate{ background:#e53e3e; color:#fff; padding:5px 10px; font-size:12px; font-weight:700; border-radius:7px; border:none; cursor:pointer; }
+        .btn-deteriorate:hover { opacity:0.85; }
+        .btn-notify     { background:#d97706; color:#fff; padding:5px 10px; font-size:12px; font-weight:700; border-radius:7px; border:none; cursor:pointer; }
+        .btn-notify:hover { opacity:0.85; }
+        .btn-view       { background:var(--hover-bg,#f0f4f8); color:var(--text-color,#1a202c); padding:5px 10px; font-size:12px; font-weight:600; border-radius:7px; border:1px solid var(--border,#e2e8f0); cursor:pointer; }
+        .btn-view:hover { border-color:#0057a8; }
+
+        .loan-table { width:100%; border-collapse:collapse; background:var(--card-bg,#fff); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+        .loan-table th, .loan-table td { padding:12px 16px; text-align:left; border-bottom:1px solid var(--border,#e2e8f0); font-size:13px; }
+        .loan-table th { background:var(--sidebar-bg,#f7f9fc); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--sidebar-text,#718096); font-weight:700; }
+        .loan-table tr:last-child td { border-bottom:none; }
+        .loan-table tr:hover td { background:var(--hover-bg,#f0f4f8); }
+
+        .badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+        .badge-active   { background:#dbeafe; color:#1e40af; }
+        .badge-returned { background:#dcfce7; color:#166534; }
+        .badge-overdue  { background:#fee2e2; color:#b91c1c; }
+
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; justify-content:center; align-items:center; }
+        .modal-overlay.open { display:flex; }
+        .modal { background:var(--card-bg,#fff); border-radius:16px; padding:32px; width:540px; max-width:96vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); max-height:90vh; overflow-y:auto; }
+        .modal h3 { margin:0 0 20px; font-size:20px; color:var(--text-color,#1a202c); }
+
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:14px 24px; margin-bottom:20px; }
+        .detail-item label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted,#718096); margin-bottom:3px; }
+        .detail-item span  { font-size:14px; color:var(--text-color,#1a202c); font-weight:500; }
+        .detail-photo { width:100%; max-height:200px; object-fit:cover; border-radius:10px; margin-bottom:16px; display:none; }
+        .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; flex-wrap:wrap; }
+
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-muted,#4a5568); }
+        .form-group select { width:100%; padding:10px 12px; border:1px solid var(--border,#cbd5e0); border-radius:8px; font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c); box-sizing:border-box; }
+
+        .photo-upload-area { border:2px dashed var(--border,#cbd5e0); border-radius:10px; padding:18px; text-align:center; cursor:pointer; transition:border-color 0.2s,background 0.2s; position:relative; }
+        .photo-upload-area:hover { border-color:#38a169; background:var(--hover-bg,#f0f4f8); }
+        .photo-upload-area input[type="file"] { position:absolute; inset:0; opacity:0; cursor:pointer; width:100%; height:100%; }
+        .photo-preview { width:100%; max-height:110px; object-fit:cover; border-radius:8px; margin-top:10px; display:none; }
+
+        .notify-textarea { width:100%; min-height:90px; padding:10px 12px; border:1px solid var(--border,#cbd5e0); border-radius:8px; font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c); box-sizing:border-box; resize:vertical; font-family:inherit; }
+        .notify-textarea:focus { outline:none; border-color:#d97706; }
+
+        .error-msg { color:#e53e3e; font-size:13px; margin-top:8px; }
+        .empty-state { text-align:center; padding:40px; color:var(--text-muted,#718096); font-size:14px; }
+        .toast-success { position:fixed; bottom:24px; right:24px; background:#38a169; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px; display:none; z-index:2000; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+
+        @media (max-width:768px) {
+            .loan-table th:nth-child(4), .loan-table td:nth-child(4),
+            .loan-table th:nth-child(5), .loan-table td:nth-child(5) { display:none; }
+            .detail-grid { grid-template-columns:1fr; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-placeholder">UVT</div>
+            <h2 data-i18n="app_title">Branding App</h2>
         </div>
-    </body>
+        <nav class="sidebar-nav">
+            <span class="nav-section">MODULES</span>
+            <a href="/home"      class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📊</span><span>Dashboard</span></a>
+            <a href="/inventory" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📦</span><span>Inventory</span></a>
+            <a href="/loans"     class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">↔️</span><span>Loans</span><span class="badge red" id="badge-loans"></span></a>
+            <a href="/handover"  class="nav-item" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔄</span><span>Handover</span></a>
+            <span class="nav-section">REPORTS</span>
+            <a href="/reports"       class="nav-item" data-roles="SuperAdmin,Admin"><span class="icon">📈</span><span>Reports</span></a>
+            <a href="/notifications" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔔</span><span>Notifications</span><span class="badge red" id="badge-notifs"></span></a>
+            <span class="nav-section">ADMIN</span>
+            <a href="/admin" class="nav-item" data-roles="SuperAdmin"><span class="icon">👥</span><span>User Management</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="user-initials">?</div>
+            <div class="user-info">
+                <strong id="user-name">Loading...</strong>
+                <span id="user-role-label"></span>
+            </div>
+            <button title="Logout" onclick="logout()" style="background:none;border:none;cursor:pointer;font-size:18px;margin-left:auto;opacity:0.55;padding:4px;line-height:1;">⏏</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Loan Tracking</h1>
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"><span class="moon-icon">🌙</span><span class="sun-icon">☀️</span><span class="slider-knob"></span></span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <input type="text" id="search-input" class="search-input" placeholder="Search by item or borrower…" oninput="filterTable()">
+            <select id="filter-status" class="filter-select" onchange="filterTable()">
+                <option value="">All Statuses</option>
+                <option value="active">Active</option>
+                <option value="overdue">Overdue</option>
+                <option value="returned">Returned</option>
+            </select>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="loan-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Item</th>
+                        <th>Borrower</th>
+                        <th>Qty</th>
+                        <th>Checked Out</th>
+                        <th>Deadline</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="loan-tbody">
+                    <tr><td colspan="8" class="empty-state">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- Detail Modal -->
+<div class="modal-overlay" id="detail-modal">
+    <div class="modal">
+        <h3>📋 Loan Details</h3>
+        <img id="detail-photo" class="detail-photo" src="" alt="Checkout photo">
+        <div class="detail-grid" id="detail-grid"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeDetail()">Close</button>
+        </div>
+    </div>
+</div>
+
+<!-- Check-in Modal -->
+<div class="modal-overlay" id="checkin-modal">
+    <div class="modal" style="width:460px;">
+        <h3>✅ Mark as Returned</h3>
+        <p id="checkin-item-label" style="color:var(--text-muted,#718096);font-size:14px;margin:0 0 20px;"></p>
+        <div class="form-group">
+            <label>Photo at Return <span style="color:#38a169">*</span></label>
+            <div class="photo-upload-area">
+                <input type="file" id="checkin-photo" accept="image/*" onchange="previewCheckin(event)">
+                <div style="font-size:24px;margin-bottom:4px;">📷</div>
+                <p id="checkin-photo-label" style="font-size:13px;color:var(--text-muted,#718096);margin:0;">Click to upload return photo</p>
+            </div>
+            <img class="photo-preview" id="checkin-preview" src="" alt="">
+        </div>
+        <div class="form-group">
+            <label>Condition on Return</label>
+            <select id="checkin-condition">
+                <option value="excelenta">Excellent</option>
+                <option value="buna" selected>Good</option>
+                <option value="uzata">Worn / Damaged</option>
+            </select>
+        </div>
+        <div class="error-msg" id="checkin-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeCheckin()">Cancel</button>
+            <button class="btn btn-return" style="padding:10px 20px;font-size:14px;" onclick="submitCheckin()">Confirm Return</button>
+        </div>
+    </div>
+</div>
+
+<!-- Notify Modal -->
+<div class="modal-overlay" id="notify-modal">
+    <div class="modal" style="width:460px;">
+        <h3>🔔 Send Deadline Notification</h3>
+        <p id="notify-loan-label" style="color:var(--text-muted,#718096);font-size:14px;margin:0 0 16px;"></p>
+        <div class="form-group">
+            <label>Message to Borrower</label>
+            <textarea class="notify-textarea" id="notify-message"></textarea>
+        </div>
+        <div class="error-msg" id="notify-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeNotify()">Cancel</button>
+            <button class="btn btn-notify" style="padding:10px 20px;font-size:14px;" onclick="submitNotify()">Send Notification</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-success" id="toast-success"></div>
+
+<script src="/static/langAndDarkMode.js"></script>
+<script>
+    let currentRole = null, currentUserId = null;
+    let allLoans = [], activeLoanId = null;
+
+    async function initPage() {
+        try {
+            const res = await fetch("/me");
+            if (!res.ok) { window.location.href = "/"; return; }
+            const user = await res.json();
+            currentRole = user.role; currentUserId = user.id;
+            applySidebar(user);
+        } catch (_) { window.location.href = "/"; return; }
+        await loadLoans();
+    }
+
+    function applySidebar(user) {
+        const name = user.full_name || user.email;
+        document.getElementById("user-name").textContent = name;
+        document.getElementById("user-role-label").textContent = user.role;
+        if (user.full_name) {
+            const initials = user.full_name.trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+            document.getElementById("user-initials").textContent = initials;
+        }
+        document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+            el.style.display = el.dataset.roles.split(",").includes(user.role) ? "" : "none";
+        });
+        document.querySelectorAll(".nav-section").forEach(section => {
+            let next = section.nextElementSibling, hasVisible = false;
+            while (next && !next.classList.contains("nav-section")) {
+                if (next.classList.contains("nav-item") && next.style.display !== "none") { hasVisible = true; break; }
+                next = next.nextElementSibling;
+            }
+            section.style.display = hasVisible ? "" : "none";
+        });
+    }
+
+    async function loadLoans() {
+        try {
+            const res = await fetch("/loans/");
+            if (res.status === 401) { window.location.href = "/"; return; }
+            allLoans = await res.json();
+            filterTable();
+            updateOverdueBadge();
+        } catch (_) {
+            document.getElementById("loan-tbody").innerHTML =
+                '<tr><td colspan="8" class="empty-state" style="color:#e53e3e;">Failed to load loans.</td></tr>';
+        }
+    }
+
+    function updateOverdueBadge() {
+        const n = allLoans.filter(l => computeStatus(l) === "overdue").length;
+        const el = document.getElementById("badge-loans");
+        el.style.display = n > 0 ? "inline-block" : "none";
+        if (n > 0) el.textContent = n;
+    }
+
+    function filterTable() {
+        const q  = document.getElementById("search-input").value.toLowerCase();
+        const sf = document.getElementById("filter-status").value;
+        renderTable(allLoans.filter(l => {
+            const status = computeStatus(l);
+            const txt = [l.item_name, l.borrower_name, l.borrower_email, l.inventory_code].join(" ").toLowerCase();
+            return (!q || txt.includes(q)) && (!sf || status === sf);
+        }));
+    }
+
+    function renderTable(loans) {
+        const tbody = document.getElementById("loan-tbody");
+        if (!loans.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="empty-state">No loans found.</td></tr>';
+            return;
+        }
+        const canManage = ["SuperAdmin","Admin"].includes(currentRole);
+        tbody.innerHTML = loans.map(l => {
+            const status = computeStatus(l);
+            const cls = status==="active"?"badge-active":status==="returned"?"badge-returned":"badge-overdue";
+            let actions = `<button class="btn-view" onclick="openDetail(${l.id})">View</button> `;
+            if (canManage && status !== "returned") {
+                actions += `<button class="btn-return"      onclick="openCheckin(${l.id})"       title="Mark returned">✅</button> `;
+                if (!l.is_deteriorated)
+                    actions += `<button class="btn-deteriorate" onclick="markDeteriorated(${l.id})" title="Flag deteriorated">⚠️</button> `;
+                actions += `<button class="btn-notify"      onclick="openNotify(${l.id})"        title="Send notification">🔔</button>`;
+            }
+            return `<tr>
+                <td style="color:var(--text-muted,#718096);font-size:12px;">#${l.id}</td>
+                <td><strong style="font-size:13px;">${esc(l.item_name)}</strong><br>
+                    <code style="font-size:11px;color:var(--text-muted,#718096);">${esc(l.inventory_code)}</code></td>
+                <td>${esc(l.borrower_name||"—")}<br>
+                    <span style="font-size:11px;color:var(--text-muted,#718096);">${esc(l.borrower_email)}</span></td>
+                <td>${l.quantity}</td>
+                <td>${fmtDate(l.checkout_date)}</td>
+                <td>${fmtDate(l.deadline_date)}${status==="overdue"?` <span style="font-size:11px;color:#b91c1c;">(${daysDiff(l.deadline_date)}d ago)</span>`:""}</td>
+                <td><span class="badge ${cls}">${status}</span>${l.is_deteriorated?' <span title="Deteriorated">⚠️</span>':""}</td>
+                <td style="white-space:nowrap;">${actions}</td>
+            </tr>`;
+        }).join("");
+    }
+
+    function computeStatus(l) {
+        if (l.status === "returned") return "returned";
+        if (l.deadline_date && new Date(l.deadline_date) < new Date()) return "overdue";
+        return "active";
+    }
+    function fmtDate(iso) {
+        if (!iso) return "—";
+        return new Date(iso).toLocaleDateString("en-GB",{day:"2-digit",month:"short",year:"numeric"});
+    }
+    function daysDiff(iso) { return Math.floor((Date.now()-new Date(iso))/86400000); }
+    function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+    // ── Detail ──
+    function openDetail(id) {
+        const l = allLoans.find(x=>x.id===id); if (!l) return;
+        const status = computeStatus(l);
+        const photo = document.getElementById("detail-photo");
+        if (l.photo_checkout) { photo.src=l.photo_checkout; photo.style.display="block"; }
+        else photo.style.display="none";
+        const cls = status==="active"?"badge-active":status==="returned"?"badge-returned":"badge-overdue";
+        document.getElementById("detail-grid").innerHTML = `
+            <div class="detail-item"><label>Loan #</label><span>#${l.id}</span></div>
+            <div class="detail-item"><label>Status</label><span class="badge ${cls}">${status}</span></div>
+            <div class="detail-item"><label>Item</label><span>${esc(l.item_name)}</span></div>
+            <div class="detail-item"><label>Code</label><span>${esc(l.inventory_code)}</span></div>
+            <div class="detail-item"><label>Borrower</label><span>${esc(l.borrower_name||"—")}</span></div>
+            <div class="detail-item"><label>Email</label><span>${esc(l.borrower_email)}</span></div>
+            <div class="detail-item"><label>Quantity</label><span>${l.quantity}</span></div>
+            <div class="detail-item"><label>Deteriorated</label><span>${l.is_deteriorated?"⚠️ Yes":"No"}</span></div>
+            <div class="detail-item"><label>Checkout Date</label><span>${fmtDate(l.checkout_date)}</span></div>
+            <div class="detail-item"><label>Deadline</label><span>${fmtDate(l.deadline_date)}</span></div>
+            <div class="detail-item"><label>Returned On</label><span>${fmtDate(l.checkin_date)}</span></div>
+            <div class="detail-item"><label>Return Condition</label><span>${l.condition_checkin||"—"}</span></div>`;
+        document.getElementById("detail-modal").classList.add("open");
+    }
+    function closeDetail() { document.getElementById("detail-modal").classList.remove("open"); }
+
+    // ── Check-in ──
+    function openCheckin(id) {
+        const l = allLoans.find(x=>x.id===id); if (!l) return;
+        activeLoanId = id;
+        document.getElementById("checkin-item-label").textContent = `"${l.item_name}" — returning ${l.quantity} unit(s)`;
+        document.getElementById("checkin-photo").value = "";
+        document.getElementById("checkin-preview").style.display = "none";
+        document.getElementById("checkin-photo-label").textContent = "Click to upload return photo";
+        document.getElementById("checkin-condition").value = "buna";
+        document.getElementById("checkin-error").textContent = "";
+        document.getElementById("checkin-modal").classList.add("open");
+    }
+    function closeCheckin() { document.getElementById("checkin-modal").classList.remove("open"); activeLoanId=null; }
+    function previewCheckin(e) {
+        const f=e.target.files[0]; if(!f) return;
+        const p=document.getElementById("checkin-preview");
+        p.src=URL.createObjectURL(f); p.style.display="block";
+        document.getElementById("checkin-photo-label").textContent=f.name;
+    }
+    async function submitCheckin() {
+        const errEl=document.getElementById("checkin-error"); errEl.textContent="";
+        const photoFile=document.getElementById("checkin-photo").files[0];
+        const condition=document.getElementById("checkin-condition").value;
+        if(!photoFile){errEl.textContent="A return photo is required.";return;}
+        let photo="";
+        try{photo=await fileToBase64(photoFile);}catch(_){errEl.textContent="Failed to read photo.";return;}
+        try {
+            const res=await fetch(`/loans/${activeLoanId}/return`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({photo_checkin:photo,condition_checkin:condition})});
+            const data=await res.json();
+            if(!res.ok){errEl.textContent=data.detail||"Failed.";return;}
+            closeCheckin(); showToast("Item marked as returned!"); await loadLoans();
+        } catch(_){errEl.textContent="Server error.";}
+    }
+
+    // ── Deteriorate ──
+    async function markDeteriorated(id) {
+        if(!confirm("Flag this loan item as deteriorated?"))return;
+        try {
+            const res=await fetch(`/loans/${id}/deteriorated`,{method:"POST"});
+            const data=await res.json();
+            if(!res.ok){alert(data.detail||"Failed.");return;}
+            showToast("Item flagged as deteriorated."); await loadLoans();
+        } catch(_){alert("Server error.");}
+    }
+
+    function openNotify(id) {
+        const l=allLoans.find(x=>x.id===id); if(!l) return;
+        activeLoanId=id;
+        document.getElementById("notify-loan-label").textContent=`To: ${l.borrower_name||l.borrower_email} · Item: "${l.item_name}" · Due: ${fmtDate(l.deadline_date)}`;
+        document.getElementById("notify-message").value=`Dear ${l.borrower_name||"borrower"},\n\nThis is a reminder that "${l.item_name}" is due for return by ${fmtDate(l.deadline_date)}.\nPlease ensure it is returned in good condition.\n\nThank you,\nUVT Branding Team`;
+        document.getElementById("notify-error").textContent="";
+        document.getElementById("notify-modal").classList.add("open");
+    }
+    function closeNotify(){document.getElementById("notify-modal").classList.remove("open");activeLoanId=null;}
+    async function submitNotify(){
+        const errEl=document.getElementById("notify-error");
+        const message=document.getElementById("notify-message").value.trim();
+        errEl.textContent="";
+        if(!message){errEl.textContent="Message cannot be empty.";return;}
+        try {
+            const res=await fetch(`/loans/${activeLoanId}/notify`,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({message})});
+            const data=await res.json();
+            if(!res.ok){errEl.textContent=data.detail||"Failed.";return;}
+            closeNotify(); showToast("Notification sent!");
+        } catch(_){errEl.textContent="Server error.";}
+    }
+
+    function fileToBase64(file){return new Promise((res,rej)=>{const r=new FileReader();r.onload=()=>res(r.result);r.onerror=rej;r.readAsDataURL(file);});}
+    function showToast(msg){const el=document.getElementById("toast-success");el.textContent=msg;el.style.display="block";setTimeout(()=>{el.style.display="none";},3000);}
+    async function logout(){await fetch("/logout/",{method:"POST"});window.location.href="/";}
+
+    initPage();
+</script>
+</body>
 </html>

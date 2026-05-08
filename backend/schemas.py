@@ -38,7 +38,7 @@ class InventoryBase(BaseModel):
 
 
 class InventoryCreate(InventoryBase):
-    pass  # No extra validation needed anymore
+    pass
 
 
 class Inventory(InventoryBase):
@@ -48,6 +48,16 @@ class Inventory(InventoryBase):
 
     class Config:
         from_attributes = True
+
+
+class InventoryUpdate(BaseModel):
+    name: Optional[str] = None
+    category: Optional[str] = None
+    inventory_code: Optional[str] = None
+    quantity: Optional[int] = Field(default=None, ge=0)
+    status: Optional[InventoryStatus] = None
+    location: Optional[str] = None
+    responsible_person: Optional[str] = None
 
 
 # --- USER SCHEMAS ---
@@ -108,21 +118,34 @@ class LoanBase(BaseModel):
     @field_validator("deadline_date")
     @classmethod
     def validate_deadline(cls, v: datetime):
-        if v <= datetime.now():
+        if v <= datetime.now(tz=v.tzinfo):
             raise ValueError("Deadline must be in the future")
         return v
 
 
 class LoanCreate(LoanBase):
-    photo_checkout: str  # path or base64
+    quantity: int = Field(ge=1, default=1)
+    checkout_date: Optional[datetime] = None
+    photo_checkout: str = "pending.jpg"  # path or base64; defaults to placeholder
+
+
+class LoanReturn(BaseModel):
+    condition_checkin: Optional[str] = None
+    photo_checkin: Optional[str] = None
+    notes: Optional[str] = None
 
 
 class Loan(LoanBase):
     id: int
-    checkout_date: datetime
+    quantity: int
+    checkout_date: Optional[datetime] = None
     checkin_date: Optional[datetime] = None
     photo_checkout: str
     photo_checkin: Optional[str] = None
+    condition_checkout: Optional[str] = None
+    condition_checkin: Optional[str] = None
+    notes: Optional[str] = None
+    is_deteriorated: bool = False
     status: LoanStatus
 
     class Config:
@@ -130,16 +153,6 @@ class Loan(LoanBase):
 
 
 # --- HANDOVER SCHEMAS ---
-
-class InventoryUpdate(BaseModel):
-    name: Optional[str] = None
-    category: Optional[str] = None
-    inventory_code: Optional[str] = None
-    quantity: Optional[int] = Field(default=None, ge=0)
-    status: Optional[InventoryStatus] = None
-    location: Optional[str] = None
-    responsible_person: Optional[str] = None
-
 
 class HandoverCreate(BaseModel):
     inventory_id: int
