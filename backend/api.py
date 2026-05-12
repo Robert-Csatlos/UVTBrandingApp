@@ -2,8 +2,9 @@ from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
+from pydantic import BaseModel
 from . import models, schemas, crud
-from .database import engine, get_db
+from .database import engine, get_db, SessionLocal
 from .auth import (
     verify_password,
     get_current_user,
@@ -14,6 +15,8 @@ from .auth import (
     delete_session,
     get_session_user_id,
 )
+from .notifications import router as notifications_router, run_scheduled_checks
+from .reports import router as reports_router
 
 models.Base.metadata.create_all(bind=engine)
 
@@ -21,9 +24,27 @@ app = FastAPI(title="UVT Branding App API")
 
 app.mount("/static", StaticFiles(directory="frontend/html/static"), name="static")
 
-# Register reports router
-from .reports import router as reports_router
+app.include_router(notifications_router)
 app.include_router(reports_router)
+
+
+# ─── Startup: hourly notification scheduler ──────────────────────────────────
+
+@app.on_event("startup")
+async def start_scheduler():
+    import asyncio
+
+    async def hourly_checker():
+        while True:
+            try:
+                db = SessionLocal()
+                run_scheduled_checks(db)
+                db.close()
+            except Exception as e:
+                print(f"[Scheduler] Error: {e}")
+            await asyncio.sleep(3600)
+
+    asyncio.create_task(hourly_checker())
 
 
 # ─── Page Routes ──────────────────────────────────────────────────────────────
@@ -54,6 +75,13 @@ def serve_loans(request: Request):
     return FileResponse("frontend/html/loanTrackingDashboard.html")
 
 
+@app.get("/notifications")
+def serve_notifications(request: Request):
+    if get_session_user_id(request) is None:
+        return RedirectResponse(url="/", status_code=302)
+    return FileResponse("frontend/html/notifications.html")
+
+
 @app.get("/reports")
 def serve_reports(request: Request, db: Session = Depends(get_db)):
     from .auth import _sessions
@@ -80,7 +108,7 @@ def serve_admin(request: Request, db: Session = Depends(get_db)):
     return FileResponse("frontend/html/superadmin.html")
 
 
-# ─── Auth API ────────────────────────────────────────────────────────────────
+# ─── Auth API ─────────────────────────────────────────────────────────────────
 
 @app.post("/login/")
 def login(user_credentials: schemas.UserLogin, response: Response, db: Session = Depends(get_db)):
@@ -106,7 +134,7 @@ def get_me(current_user: models.User = Depends(get_current_user)):
     return current_user
 
 
-# ─── Inventory API ───────────────────────────────────────────────────────────
+# ─── Inventory API ────────────────────────────────────────────────────────────
 
 @app.post("/inventory/", response_model=schemas.Inventory)
 def add_item(
@@ -157,7 +185,7 @@ def delete_item(
     return {"message": "Item deleted"}
 
 
-# ─── Stats API ───────────────────────────────────────────────────────────────
+# ─── Stats API ────────────────────────────────────────────────────────────────
 
 @app.get("/stats")
 def get_stats(
@@ -167,7 +195,7 @@ def get_stats(
     return crud.get_stats(db)
 
 
-# ─── Loan API ────────────────────────────────────────────────────────────────
+# ─── Loan API ─────────────────────────────────────────────────────────────────
 
 @app.post("/loans/", response_model=schemas.Loan)
 def checkout_item(
@@ -175,7 +203,6 @@ def checkout_item(
     db: Session = Depends(get_db),
     _: models.User = Depends(require_coordinator_or_above),
 ):
-    """Create a new loan. Coordinator and above."""
     return crud.create_loan(db, loan)
 
 
@@ -184,63 +211,45 @@ def list_loans(
     db: Session = Depends(get_db),
     _: models.User = Depends(get_current_user),
 ):
-    """List all active loans with item + user details. All authenticated users."""
-    return crud.get_active_loans(db)
-
-
-@app.get("/loans/all")
-def list_all_loans(
-    db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin_or_above),
-):
-    """List every loan (including returned). Admin and above only."""
     return crud.get_all_loans(db)
+
+
+class ReturnBody(BaseModel):
+    photo_checkin: str
+    condition_checkin: str
 
 
 @app.post("/loans/{loan_id}/return")
 def return_loan(
     loan_id: int,
-    update: schemas.LoanReturn,
+    body: ReturnBody,
     db: Session = Depends(get_db),
     _: models.User = Depends(require_admin_or_above),
 ):
-    """Mark a loan as returned. Admin and above only."""
-    return crud.return_loan(db, loan_id, update)
+    return crud.return_loan(db, loan_id, body.photo_checkin, body.condition_checkin)
 
 
 @app.post("/loans/{loan_id}/deteriorated")
 def flag_deteriorated(
     loan_id: int,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin_or_above),
+    current_user: models.User = Depends(require_admin_or_above),
 ):
-    """Flag an item as deteriorated. Admin and above only."""
-    return crud.mark_deteriorated(db, loan_id)
+    return crud.mark_loan_deteriorated(db, loan_id, current_user.id)
+
+
+class NotifyBody(BaseModel):
+    message: str
 
 
 @app.post("/loans/{loan_id}/notify")
-def send_deadline_notification(
+def notify_borrower(
     loan_id: int,
+    body: NotifyBody,
     db: Session = Depends(get_db),
     current_user: models.User = Depends(require_admin_or_above),
 ):
-    """
-    Send a deadline reminder notification for a loan.
-    Admin and SuperAdmin only.
-    In a real deployment this would send an email / push notification.
-    For now it returns the loan details so the frontend can display a confirmation.
-    """
-    loan_rows = crud.get_all_loans(db)
-    loan = next((l for l in loan_rows if l["id"] == loan_id), None)
-    if not loan:
-        raise HTTPException(status_code=404, detail="Loan not found")
-    # TODO: integrate email / notification service here
-    return {
-        "message": f"Notification sent to {loan['borrower_email']}",
-        "loan_id": loan_id,
-        "borrower_email": loan["borrower_email"],
-        "deadline_date": loan["deadline_date"],
-    }
+    return crud.send_manual_notification(db, loan_id, body.message, current_user.id)
 
 
 # ─── Superadmin: User Management API ─────────────────────────────────────────

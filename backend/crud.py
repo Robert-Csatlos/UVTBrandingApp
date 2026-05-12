@@ -1,7 +1,9 @@
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from fastapi import HTTPException
 from . import models, schemas
 from .auth import get_password_hash
+import datetime
 
 
 # --- Inventory ---
@@ -101,11 +103,12 @@ def delete_user(db: Session, user_id: int):
 # --- Stats ---
 
 def get_stats(db: Session):
-    import datetime
     now = datetime.datetime.utcnow()
     soon = now + datetime.timedelta(days=3)
 
-    total = db.query(models.Inventory).count()
+    # Total units across all inventory items
+    total = db.query(func.sum(models.Inventory.quantity)).scalar() or 0
+
     borrowed = db.query(models.Loan).filter(models.Loan.status == "active").count()
     overdue = db.query(models.Loan).filter(
         models.Loan.status == "active",
@@ -118,14 +121,11 @@ def get_stats(db: Session):
     ).count()
     low_stock = db.query(models.Inventory).filter(models.Inventory.quantity < 20).count()
 
-    on_loan_ids = [
-        r[0] for r in db.query(models.Loan.inventory_id)
-        .filter(models.Loan.status == "active").distinct().all()
-    ]
-    available = (
-        db.query(models.Inventory).filter(~models.Inventory.id.in_(on_loan_ids)).count()
-        if on_loan_ids else total
-    )
+    # Available = total units minus units currently on active loans
+    loaned_units = db.query(func.sum(models.Loan.quantity)).filter(
+        models.Loan.status == "active"
+    ).scalar() or 0
+    available = total - loaned_units
 
     return {
         "total": total,
@@ -140,8 +140,57 @@ def get_stats(db: Session):
 # --- Loans ---
 
 def create_loan(db: Session, loan: schemas.LoanCreate):
+    from .notifications import create_notification, notify_all_admins
+
+    item = get_inventory_by_id(db, loan.inventory_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Inventory item not found")
+    if item.quantity < loan.quantity:
+        raise HTTPException(status_code=400, detail=f"Only {item.quantity} units available")
+
+    # Deduct stock
+    item.quantity -= loan.quantity
+
     db_loan = models.Loan(**loan.model_dump())
     db.add(db_loan)
+    db.flush()  # populate db_loan.id before notifications
+
+    borrower = get_user_by_id(db, loan.user_id)
+    borrower_name = borrower.full_name or borrower.email if borrower else f"User #{loan.user_id}"
+    deadline_str = loan.deadline_date.strftime("%d %b %Y")
+
+    # Notify borrower: loan confirmed
+    create_notification(
+        db,
+        recipient_id=loan.user_id,
+        type="loan_made",
+        title="📦 Loan Confirmed",
+        message=f'Your loan of "{item.name}" (×{loan.quantity}) has been registered. Please return it by {deadline_str}.',
+        loan_id=db_loan.id,
+        inventory_id=item.id,
+    )
+
+    # Notify all Admins/SuperAdmins: new loan
+    notify_all_admins(
+        db,
+        type="loan_made",
+        title="📦 New Loan Registered",
+        message=f'{borrower_name} loaned "{item.name}" (×{loan.quantity}). Due: {deadline_str}.',
+        sender_id=loan.user_id,
+        loan_id=db_loan.id,
+        inventory_id=item.id,
+    )
+
+    # Low stock warning
+    if item.quantity < 20:
+        notify_all_admins(
+            db,
+            type="low_stock",
+            title="📉 Low Stock Alert",
+            message=f'"{item.name}" now has only {item.quantity} unit{"s" if item.quantity != 1 else ""} remaining.',
+            inventory_id=item.id,
+        )
+
     db.commit()
     db.refresh(db_loan)
     return db_loan
@@ -154,7 +203,6 @@ def get_all_loans(db: Session):
             models.Loan,
             models.Inventory.name.label("item_name"),
             models.Inventory.inventory_code,
-            models.Inventory.category,
             models.User.full_name.label("borrower_name"),
             models.User.email.label("borrower_email"),
         )
@@ -163,111 +211,106 @@ def get_all_loans(db: Session):
         .order_by(models.Loan.checkout_date.desc())
         .all()
     )
+
     result = []
-    for loan, item_name, inventory_code, category, borrower_name, borrower_email in rows:
-        result.append({
-            "id": loan.id,
-            "inventory_id": loan.inventory_id,
-            "user_id": loan.user_id,
-            "quantity": loan.quantity,
-            "reason": loan.reason,
-            "checkout_date": loan.checkout_date.isoformat() if loan.checkout_date else None,
-            "deadline_date": loan.deadline_date.isoformat() if loan.deadline_date else None,
-            "checkin_date": loan.checkin_date.isoformat() if loan.checkin_date else None,
-            "condition_checkout": loan.condition_checkout,
-            "condition_checkin": loan.condition_checkin,
-            "photo_checkout": loan.photo_checkout,
-            "photo_checkin": loan.photo_checkin,
-            "notes": loan.notes,
-            "accessories": loan.accessories,
-            "is_deteriorated": loan.is_deteriorated,
-            "status": loan.status,
-            "item_name": item_name,
-            "inventory_code": inventory_code,
-            "category": category,
-            "borrower_name": borrower_name,
-            "borrower_email": borrower_email,
-        })
+    for loan, item_name, inventory_code, borrower_name, borrower_email in rows:
+        d = {c.name: getattr(loan, c.name) for c in loan.__table__.columns}
+        d["item_name"] = item_name
+        d["inventory_code"] = inventory_code
+        d["borrower_name"] = borrower_name
+        d["borrower_email"] = borrower_email
+        result.append(d)
     return result
 
 
-def get_loan_by_id(db: Session, loan_id: int):
-    return db.query(models.Loan).filter(models.Loan.id == loan_id).first()
+def return_loan(db: Session, loan_id: int, photo_checkin: str, condition_checkin: str):
+    from .notifications import create_notification
 
-
-def get_active_loans(db: Session):
-    """Return only active loans with joined info."""
-    import datetime
-    now = datetime.datetime.utcnow()
-    rows = (
-        db.query(
-            models.Loan,
-            models.Inventory.name.label("item_name"),
-            models.Inventory.inventory_code,
-            models.Inventory.category,
-            models.User.full_name.label("borrower_name"),
-            models.User.email.label("borrower_email"),
-        )
-        .join(models.Inventory, models.Loan.inventory_id == models.Inventory.id)
-        .join(models.User, models.Loan.user_id == models.User.id)
-        .filter(models.Loan.status == "active")
-        .order_by(models.Loan.deadline_date.asc())
-        .all()
-    )
-    result = []
-    for loan, item_name, inventory_code, category, borrower_name, borrower_email in rows:
-        is_overdue = loan.deadline_date and loan.deadline_date < now
-        result.append({
-            "id": loan.id,
-            "inventory_id": loan.inventory_id,
-            "user_id": loan.user_id,
-            "quantity": loan.quantity,
-            "reason": loan.reason,
-            "checkout_date": loan.checkout_date.isoformat() if loan.checkout_date else None,
-            "deadline_date": loan.deadline_date.isoformat() if loan.deadline_date else None,
-            "checkin_date": None,
-            "condition_checkout": loan.condition_checkout,
-            "is_deteriorated": loan.is_deteriorated,
-            "photo_checkout": loan.photo_checkout,
-            "notes": loan.notes,
-            "status": loan.status,
-            "is_overdue": is_overdue,
-            "item_name": item_name,
-            "inventory_code": inventory_code,
-            "category": category,
-            "borrower_name": borrower_name,
-            "borrower_email": borrower_email,
-        })
-    return result
-
-
-def return_loan(db: Session, loan_id: int, update: schemas.LoanReturn):
-    """Mark a loan as returned (check-in)."""
-    import datetime
-    loan = get_loan_by_id(db, loan_id)
+    loan = db.query(models.Loan).filter(models.Loan.id == loan_id).first()
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
-    if loan.status != "active":
-        raise HTTPException(status_code=400, detail="Loan is not active")
+    if loan.status == "returned":
+        raise HTTPException(status_code=400, detail="Loan already returned")
+
     loan.status = "returned"
-    loan.checkin_date = datetime.datetime.utcnow()
-    if update.condition_checkin:
-        loan.condition_checkin = update.condition_checkin
-    if update.photo_checkin:
-        loan.photo_checkin = update.photo_checkin
-    if update.notes:
-        loan.notes = update.notes
+    loan.checkin_date = datetime.datetime.now(datetime.timezone.utc)
+    loan.photo_checkin = photo_checkin
+    loan.condition_checkin = condition_checkin
+
+    # Restore stock
+    item = get_inventory_by_id(db, loan.inventory_id)
+    if item:
+        item.quantity += loan.quantity
+
+    item_name = item.name if item else f"Item #{loan.inventory_id}"
+
+    # Notify borrower: return confirmed
+    create_notification(
+        db,
+        recipient_id=loan.user_id,
+        type="returned",
+        title="✅ Return Confirmed",
+        message=f'Your return of "{item_name}" (×{loan.quantity}) has been recorded. Thank you!',
+        loan_id=loan.id,
+        inventory_id=loan.inventory_id,
+    )
+
     db.commit()
     db.refresh(loan)
     return loan
 
 
-def mark_deteriorated(db: Session, loan_id: int):
-    """Flag a loan's item as deteriorated."""
-    loan = get_loan_by_id(db, loan_id)
+def mark_loan_deteriorated(db: Session, loan_id: int, admin_id: int):
+    from .notifications import notify_all_admins
+
+    loan = db.query(models.Loan).filter(models.Loan.id == loan_id).first()
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
+    if loan.is_deteriorated:
+        raise HTTPException(status_code=400, detail="Already marked as deteriorated")
+
     loan.is_deteriorated = True
+
+    item = get_inventory_by_id(db, loan.inventory_id)
+    borrower = get_user_by_id(db, loan.user_id)
+    item_name = item.name if item else f"Item #{loan.inventory_id}"
+    borrower_name = borrower.full_name or borrower.email if borrower else f"User #{loan.user_id}"
+
+    notify_all_admins(
+        db,
+        type="deteriorated",
+        title="⚠️ Item Flagged as Deteriorated",
+        message=f'"{item_name}" from loan #{loan.id} (borrower: {borrower_name}) has been flagged as deteriorated.',
+        sender_id=admin_id,
+        loan_id=loan.id,
+        inventory_id=loan.inventory_id,
+    )
+
     db.commit()
     db.refresh(loan)
     return loan
+
+
+def send_manual_notification(db: Session, loan_id: int, message: str, sender_id: int):
+    from .notifications import create_notification
+
+    loan = db.query(models.Loan).filter(models.Loan.id == loan_id).first()
+    if not loan:
+        raise HTTPException(status_code=404, detail="Loan not found")
+
+    sender = get_user_by_id(db, sender_id)
+    sender_name = sender.full_name or sender.email if sender else "Admin"
+
+    create_notification(
+        db,
+        recipient_id=loan.user_id,
+        sender_id=sender_id,
+        type="manual",
+        title=f"📨 Message from {sender_name}",
+        message=message,
+        loan_id=loan.id,
+        inventory_id=loan.inventory_id,
+    )
+
+    db.commit()
+    return {"message": "Notification sent"}

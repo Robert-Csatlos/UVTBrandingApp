@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Notifications – UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+    <style>
+        .toolbar {
+            display: flex; gap: 12px; align-items: center;
+            margin-bottom: 20px; flex-wrap: wrap;
+        }
+        .filter-btn {
+            padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border, #cbd5e0);
+            background: var(--card-bg, #fff); color: var(--text-muted, #718096);
+            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+        }
+        .filter-btn:hover  { border-color: #0057a8; color: #0057a8; }
+        .filter-btn.active { background: #0057a8; color: #fff; border-color: #0057a8; }
+        .toolbar-right { margin-left: auto; display: flex; gap: 8px; }
+        .btn {
+            padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer;
+            font-size: 13px; font-weight: 600; transition: opacity 0.2s;
+        }
+        .btn:hover { opacity: 0.85; }
+        .btn-ghost { background: transparent; border: 1px solid var(--border, #cbd5e0); color: var(--text-muted, #718096); }
+        .btn-danger-outline { background: transparent; border: 1px solid #e53e3e; color: #e53e3e; }
+
+        /* ── Notification list ── */
+        .notif-list { display: flex; flex-direction: column; gap: 10px; }
+
+        .notif-card {
+            display: flex; gap: 16px; align-items: flex-start;
+            background: var(--card-bg, #fff);
+            border-radius: 12px; padding: 16px 20px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-left: 4px solid transparent;
+            cursor: pointer; transition: box-shadow 0.15s, background 0.15s;
+            position: relative;
+        }
+        .notif-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
+        .notif-card.unread { border-left-color: #0057a8; }
+        .notif-card.unread { background: color-mix(in srgb, var(--card-bg, #fff) 95%, #0057a8); }
+
+        /* type accent colours */
+        .notif-card.type-loan_made    { border-left-color: #3b82f6; }
+        .notif-card.type-due_soon     { border-left-color: #f59e0b; }
+        .notif-card.type-overdue      { border-left-color: #e53e3e; }
+        .notif-card.type-returned     { border-left-color: #38a169; }
+        .notif-card.type-deteriorated { border-left-color: #9333ea; }
+        .notif-card.type-low_stock    { border-left-color: #f97316; }
+        .notif-card.type-manual       { border-left-color: #0057a8; }
+
+        .notif-icon {
+            font-size: 22px; flex-shrink: 0;
+            width: 44px; height: 44px;
+            background: var(--hover-bg, #f0f4f8);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+        }
+        .notif-body { flex: 1; min-width: 0; }
+        .notif-title {
+            font-size: 14px; font-weight: 700;
+            color: var(--text-color, #1a202c); margin-bottom: 4px;
+        }
+        .notif-message {
+            font-size: 13px; color: var(--text-muted, #4a5568);
+            line-height: 1.5; white-space: pre-wrap;
+        }
+        .notif-meta {
+            font-size: 11px; color: var(--text-muted, #718096);
+            margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap;
+        }
+        .notif-meta span { display: flex; align-items: center; gap: 3px; }
+
+        .unread-dot {
+            width: 8px; height: 8px; border-radius: 50%;
+            background: #0057a8; flex-shrink: 0; margin-top: 6px;
+        }
+
+        .notif-actions {
+            display: flex; gap: 6px; flex-shrink: 0; align-items: center;
+        }
+        .icon-btn {
+            background: none; border: none; cursor: pointer; font-size: 16px;
+            opacity: 0.45; transition: opacity 0.15s; padding: 4px;
+        }
+        .icon-btn:hover { opacity: 1; }
+
+        /* ── Empty state ── */
+        .empty-state {
+            text-align: center; padding: 60px 20px;
+            color: var(--text-muted, #718096); font-size: 15px;
+        }
+        .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
+
+        /* ── Unread badge in header ── */
+        .unread-summary {
+            font-size: 13px; color: var(--text-muted, #718096);
+            margin-left: 4px;
+        }
+
+        .toast-success {
+            position: fixed; bottom: 24px; right: 24px;
+            background: #38a169; color: #fff; padding: 12px 20px;
+            border-radius: 8px; font-size: 14px; display: none;
+            z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <!-- ════════ SIDEBAR ════════ -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <div class="logo-placeholder">UVT</div>
+            <h2 data-i18n="app_title">Branding App</h2>
+        </div>
+        <nav class="sidebar-nav">
+            <span class="nav-section">MODULES</span>
+            <a href="/home"      class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📊</span><span>Dashboard</span></a>
+            <a href="/inventory" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📦</span><span>Inventory</span></a>
+            <a href="/loans"     class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">↔️</span><span>Loans</span><span class="badge red" id="badge-loans"></span></a>
+            <a href="/handover"  class="nav-item" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔄</span><span>Handover</span></a>
+            <span class="nav-section">REPORTS</span>
+            <a href="/reports"       class="nav-item" data-roles="SuperAdmin,Admin"><span class="icon">📈</span><span>Reports</span></a>
+            <a href="/notifications" class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔔</span><span>Notifications</span><span class="badge red" id="badge-notifs"></span></a>
+            <span class="nav-section">ADMIN</span>
+            <a href="/admin" class="nav-item" data-roles="SuperAdmin"><span class="icon">👥</span><span>User Management</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="user-initials">?</div>
+            <div class="user-info">
+                <strong id="user-name">Loading...</strong>
+                <span id="user-role-label"></span>
+            </div>
+            <button title="Logout" onclick="logout()" style="background:none;border:none;cursor:pointer;font-size:18px;margin-left:auto;opacity:0.55;padding:4px;line-height:1;">⏏</button>
+        </div>
+    </aside>
+
+    <!-- ════════ MAIN ════════ -->
+    <main class="main-content">
+        <header class="top-header">
+            <div style="display:flex;align-items:baseline;gap:10px;">
+                <h1>Notifications</h1>
+                <span class="unread-summary" id="unread-summary"></span>
+            </div>
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"><span class="moon-icon">🌙</span><span class="sun-icon">☀️</span><span class="slider-knob"></span></span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+        </header>
+
+        <!-- Filter toolbar -->
+        <div class="toolbar">
+            <button class="filter-btn active" data-filter="all"         onclick="setFilter('all', this)">All</button>
+            <button class="filter-btn"        data-filter="unread"      onclick="setFilter('unread', this)">Unread</button>
+            <button class="filter-btn"        data-filter="loan_made"   onclick="setFilter('loan_made', this)">📦 Loans</button>
+            <button class="filter-btn"        data-filter="due_soon"    onclick="setFilter('due_soon', this)">⏰ Due Soon</button>
+            <button class="filter-btn"        data-filter="overdue"     onclick="setFilter('overdue', this)">🚨 Overdue</button>
+            <button class="filter-btn"        data-filter="returned"    onclick="setFilter('returned', this)">✅ Returned</button>
+            <button class="filter-btn"        data-filter="deteriorated" onclick="setFilter('deteriorated', this)">⚠️ Deteriorated</button>
+            <button class="filter-btn"        data-filter="low_stock"   onclick="setFilter('low_stock', this)">📉 Low Stock</button>
+            <button class="filter-btn"        data-filter="manual"      onclick="setFilter('manual', this)">📨 Messages</button>
+
+            <div class="toolbar-right">
+                <button class="btn btn-ghost" onclick="markAllRead()">Mark all read</button>
+                <button class="btn btn-danger-outline" onclick="clearAll()">Clear all</button>
+            </div>
+        </div>
+
+        <!-- Notification list -->
+        <div class="notif-list" id="notif-list">
+            <div class="empty-state"><div class="empty-icon">🔔</div>Loading…</div>
+        </div>
+    </main>
+</div>
+
+<div class="toast-success" id="toast-success"></div>
+
+<script src="/static/langAndDarkMode.js"></script>
+<script>
+    let currentRole = null;
+    let allNotifs   = [];
+    let activeFilter = "all";
+
+    // ── Init ────────────────────────────────────────────────────────────
+    async function initPage() {
+        try {
+            const res = await fetch("/me");
+            if (!res.ok) { window.location.href = "/"; return; }
+            const user = await res.json();
+            currentRole = user.role;
+            applySidebar(user);
+        } catch (_) { window.location.href = "/"; return; }
+        await loadNotifications();
+    }
+
+    function applySidebar(user) {
+        const name = user.full_name || user.email;
+        document.getElementById("user-name").textContent = name;
+        document.getElementById("user-role-label").textContent = user.role;
+        if (user.full_name) {
+            const initials = user.full_name.trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+            document.getElementById("user-initials").textContent = initials;
+        }
+        document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+            el.style.display = el.dataset.roles.split(",").includes(user.role) ? "" : "none";
+        });
+        document.querySelectorAll(".nav-section").forEach(section => {
+            let next = section.nextElementSibling, hasVisible = false;
+            while (next && !next.classList.contains("nav-section")) {
+                if (next.classList.contains("nav-item") && next.style.display !== "none") { hasVisible = true; break; }
+                next = next.nextElementSibling;
+            }
+            section.style.display = hasVisible ? "" : "none";
+        });
+    }
+
+    // ── Load ────────────────────────────────────────────────────────────
+    async function loadNotifications() {
+        try {
+            const res = await fetch("/notifications/");
+            if (res.status === 401) { window.location.href = "/"; return; }
+            allNotifs = await res.json();
+            renderList();
+            updateSummary();
+            updateSidebarBadge();
+        } catch (_) {
+            document.getElementById("notif-list").innerHTML =
+                '<div class="empty-state"><div class="empty-icon">❌</div>Failed to load notifications.</div>';
+        }
+    }
+
+    // ── Filter ──────────────────────────────────────────────────────────
+    function setFilter(filter, btn) {
+        activeFilter = filter;
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        renderList();
+    }
+
+    function filteredNotifs() {
+        if (activeFilter === "all")    return allNotifs;
+        if (activeFilter === "unread") return allNotifs.filter(n => !n.is_read);
+        return allNotifs.filter(n => n.type === activeFilter);
+    }
+
+    // ── Render ──────────────────────────────────────────────────────────
+    const TYPE_ICONS = {
+        loan_made:    "📦",
+        due_soon:     "⏰",
+        overdue:      "🚨",
+        returned:     "✅",
+        deteriorated: "⚠️",
+        low_stock:    "📉",
+        manual:       "📨",
+    };
+
+    function renderList() {
+        const list = document.getElementById("notif-list");
+        const items = filteredNotifs();
+
+        if (!items.length) {
+            list.innerHTML = `<div class="empty-state">
+                <div class="empty-icon">🔔</div>
+                No notifications${activeFilter !== "all" ? " in this category" : ""}.
+            </div>`;
+            return;
+        }
+
+        list.innerHTML = items.map(n => {
+            const icon    = TYPE_ICONS[n.type] || "🔔";
+            const timeAgo = relativeTime(n.created_at);
+            const sender  = n.sender_name ? `<span>From: ${esc(n.sender_name)}</span>` : "";
+            const loanLink = n.loan_id
+                ? `<span><a href="/loans" style="color:#0057a8;text-decoration:none;">Loan #${n.loan_id}</a></span>` : "";
+            const readClass = n.is_read ? "" : "unread";
+
+            return `<div class="notif-card type-${n.type} ${readClass}" id="notif-${n.id}" onclick="markRead(${n.id})">
+                <div class="notif-icon">${icon}</div>
+                <div class="notif-body">
+                    <div class="notif-title">${esc(n.title)}</div>
+                    <div class="notif-message">${esc(n.message)}</div>
+                    <div class="notif-meta">
+                        <span>🕐 ${timeAgo}</span>
+                        ${sender}
+                        ${loanLink}
+                    </div>
+                </div>
+                <div class="notif-actions">
+                    ${!n.is_read ? '<div class="unread-dot" title="Unread"></div>' : ''}
+                    <button class="icon-btn" onclick="event.stopPropagation(); deleteNotif(${n.id})" title="Delete">🗑️</button>
+                </div>
+            </div>`;
+        }).join("");
+    }
+
+    function updateSummary() {
+        const unread = allNotifs.filter(n => !n.is_read).length;
+        const el = document.getElementById("unread-summary");
+        el.textContent = unread > 0 ? `(${unread} unread)` : "";
+    }
+
+    function updateSidebarBadge() {
+        const unread = allNotifs.filter(n => !n.is_read).length;
+        const badge = document.getElementById("badge-notifs");
+        if (unread > 0) {
+            badge.style.display = "inline-block";
+            badge.textContent = unread;
+        } else {
+            badge.style.display = "none";
+        }
+    }
+
+    // ── Actions ──────────────────────────────────────────────────────────
+    async function markRead(id) {
+        const notif = allNotifs.find(n => n.id === id);
+        if (!notif || notif.is_read) return;
+        try {
+            await fetch("/notifications/mark-read", {
+                method: "POST",
+                headers: {"Content-Type":"application/json"},
+                body: JSON.stringify({ ids: [id] }),
+            });
+            notif.is_read = true;
+            renderList();
+            updateSummary();
+            updateSidebarBadge();
+        } catch (_) {}
+    }
+
+    async function markAllRead() {
+        try {
+            await fetch("/notifications/mark-all-read", { method: "POST" });
+            allNotifs.forEach(n => n.is_read = true);
+            renderList();
+            updateSummary();
+            updateSidebarBadge();
+            showToast("All notifications marked as read.");
+        } catch (_) {}
+    }
+
+    async function deleteNotif(id) {
+        try {
+            await fetch(`/notifications/${id}`, { method: "DELETE" });
+            allNotifs = allNotifs.filter(n => n.id !== id);
+            renderList();
+            updateSummary();
+            updateSidebarBadge();
+        } catch (_) {}
+    }
+
+    async function clearAll() {
+        if (!confirm("Clear all notifications? This cannot be undone.")) return;
+        try {
+            await fetch("/notifications/", { method: "DELETE" });
+            allNotifs = [];
+            renderList();
+            updateSummary();
+            updateSidebarBadge();
+            showToast("All notifications cleared.");
+        } catch (_) {}
+    }
+
+    // ── Helpers ──────────────────────────────────────────────────────────
+    function relativeTime(iso) {
+        const diff = Date.now() - new Date(iso).getTime();
+        const mins  = Math.floor(diff / 60000);
+        const hours = Math.floor(diff / 3600000);
+        const days  = Math.floor(diff / 86400000);
+        if (mins  < 1)  return "just now";
+        if (mins  < 60) return `${mins}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        if (days  < 7)  return `${days}d ago`;
+        return new Date(iso).toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+    }
+
+    function esc(s) {
+        return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById("toast-success");
+        el.textContent = msg; el.style.display = "block";
+        setTimeout(() => { el.style.display = "none"; }, 3000);
+    }
+
+    async function logout() {
+        await fetch("/logout/", { method: "POST" });
+        window.location.href = "/";
+    }
+
+    // Auto-refresh every 60 seconds
+    setInterval(loadNotifications, 60000);
+    initPage();
+</script>
+</body>
+</html>

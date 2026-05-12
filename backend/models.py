@@ -17,6 +17,7 @@ class Inventory(Base):
     photo_path = Column(String, nullable=True)
     qr_code_path = Column(String, nullable=True)
 
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
@@ -45,6 +46,7 @@ class Loan(Base):
     is_deteriorated = Column(Boolean, default=False)
     status = Column(String, default="active") # active, returned, overdue
 
+
 class Handover(Base):
     __tablename__ = "handovers"
     id = Column(Integer, primary_key=True, index=True)
@@ -62,3 +64,23 @@ class Handover(Base):
     receiver_signature_path = Column(String, nullable=True)
     pdf_report_path = Column(String, nullable=True) # Generated "Proces verbal"
     status = Column(String, default="pending") # pending / completed
+
+
+class Notification(Base):
+    __tablename__ = "notifications"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    recipient_id = Column(Integer, ForeignKey("users.id"), nullable=False) # Who receives this notification
+    sender_id = Column(Integer, ForeignKey("users.id"), nullable=True) # Who triggered it (None = system-generated)
+    type = Column(String, nullable=False) # Types: loan_made | due_soon | overdue | returned | deteriorated | low_stock | manual
+
+    title = Column(String, nullable=False)
+    message = Column(String, nullable=False)
+
+    # Optional back-links
+    loan_id = Column(Integer, ForeignKey("loans.id"), nullable=True)
+    inventory_id = Column(Integer, ForeignKey("inventory.id"), nullable=True)
+
+    is_read = Column(Boolean, default=False)
+    created_at = Column(DateTime, default=lambda: datetime.datetime.now(datetime.timezone.utc))
