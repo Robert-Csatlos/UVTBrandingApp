@@ -212,6 +212,20 @@ button:not(.flag-btn):active {
     text-decoration: underline;
 }
 
+/* --- Login Logo --- */
+.login-logo {
+    width: 220px;
+    height: auto;
+    object-fit: contain;
+    display: block;
+    margin: 0 auto 20px;
+}
+
+[data-theme="dark"] .login-logo {
+    filter: brightness(0) invert(1);
+    opacity: 0.9;
+}
+
 /* --- 8. Animations --- */
 .fade-in {
     animation: fadeInSlide 0.5s ease-out forwards;

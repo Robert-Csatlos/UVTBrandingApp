@@ -1,4 +1,4 @@
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, aliased
 from sqlalchemy import func
 from fastapi import HTTPException
 from . import models, schemas
@@ -289,6 +289,99 @@ def mark_loan_deteriorated(db: Session, loan_id: int, admin_id: int):
     db.commit()
     db.refresh(loan)
     return loan
+
+
+# --- Handovers ---
+
+def create_handover(db: Session, handover: schemas.HandoverCreate, sender_id: int):
+    from .notifications import create_notification
+    if handover.receiver_id == sender_id:
+        raise HTTPException(status_code=400, detail="Sender and receiver must be different")
+
+    db_handover = models.Handover(
+        inventory_id=handover.inventory_id,
+        sender_id=sender_id,
+        receiver_id=handover.receiver_id,
+        quantity=handover.quantity,
+        condition_before=handover.condition_before,
+        photo_before=handover.photo_before,
+        notes=handover.notes,
+        sender_signature_path=handover.sender_signature_path,
+        status="pending",
+    )
+    db.add(db_handover)
+    db.flush()
+
+    item = get_inventory_by_id(db, handover.inventory_id)
+    sender = get_user_by_id(db, sender_id)
+    item_name = item.name if item else f"Item #{handover.inventory_id}"
+    sender_name = sender.full_name or sender.email if sender else f"User #{sender_id}"
+
+    create_notification(
+        db,
+        recipient_id=handover.receiver_id,
+        sender_id=sender_id,
+        type="manual",
+        title="🔄 Handover Awaiting Your Confirmation",
+        message=f'{sender_name} has initiated a handover of "{item_name}" (×{handover.quantity}) to you. Please confirm receipt.',
+    )
+
+    db.commit()
+    db.refresh(db_handover)
+    return db_handover
+
+
+def get_all_handovers(db: Session):
+    sender_alias = aliased(models.User)
+    receiver_alias = aliased(models.User)
+
+    rows = (
+        db.query(
+            models.Handover,
+            models.Inventory.name.label("item_name"),
+            models.Inventory.inventory_code,
+            sender_alias.full_name.label("sender_name"),
+            sender_alias.email.label("sender_email"),
+            receiver_alias.full_name.label("receiver_name"),
+            receiver_alias.email.label("receiver_email"),
+        )
+        .join(models.Inventory, models.Handover.inventory_id == models.Inventory.id)
+        .join(sender_alias, models.Handover.sender_id == sender_alias.id)
+        .join(receiver_alias, models.Handover.receiver_id == receiver_alias.id)
+        .order_by(models.Handover.handover_date.desc())
+        .all()
+    )
+
+    result = []
+    for handover, item_name, inventory_code, sender_name, sender_email, receiver_name, receiver_email in rows:
+        d = {c.name: getattr(handover, c.name) for c in handover.__table__.columns}
+        d["item_name"] = item_name
+        d["inventory_code"] = inventory_code
+        d["sender_name"] = sender_name
+        d["sender_email"] = sender_email
+        d["receiver_name"] = receiver_name
+        d["receiver_email"] = receiver_email
+        result.append(d)
+    return result
+
+
+def confirm_handover(db: Session, handover_id: int, receiver_id: int, body: schemas.HandoverConfirm):
+    handover = db.query(models.Handover).filter(models.Handover.id == handover_id).first()
+    if not handover:
+        raise HTTPException(status_code=404, detail="Handover not found")
+    if handover.status == "completed":
+        raise HTTPException(status_code=400, detail="Handover already completed")
+    if handover.receiver_id != receiver_id:
+        raise HTTPException(status_code=403, detail="Only the assigned receiver can confirm this handover")
+
+    handover.status = "completed"
+    handover.condition_after = body.condition_after
+    handover.photo_after = body.photo_after
+    handover.receiver_signature_path = body.receiver_signature_path
+
+    db.commit()
+    db.refresh(handover)
+    return handover
 
 
 def send_manual_notification(db: Session, loan_id: int, message: str, sender_id: int):

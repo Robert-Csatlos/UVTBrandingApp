@@ -1,14 +1,752 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <link rel="stylesheet" href="/static/home.css">
-        <title>Handover</title>
-    </head>
-    <body>
-        <div class="container">
-            <h1>WELCOME TO UVT BRANDING APP</h1>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Handover Protocol – UVT Branding App</title>
+    <link rel="stylesheet" href="/static/home.css">
+    <style>
+        /* ── Toolbar ── */
+        .toolbar { display:flex; gap:12px; align-items:center; margin-bottom:20px; flex-wrap:wrap; }
+        .search-input {
+            flex:1; min-width:200px; padding:10px 14px;
+            border:1px solid var(--border,#cbd5e0); border-radius:8px;
+            font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c);
+        }
+        .search-input:focus { outline:none; border-color:#0057a8; }
+        .filter-select {
+            padding:10px 14px; border:1px solid var(--border,#cbd5e0); border-radius:8px;
+            font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c); cursor:pointer;
+        }
+
+        /* ── Buttons ── */
+        .btn { padding:10px 20px; border:none; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600; transition:opacity 0.2s; white-space:nowrap; }
+        .btn:hover { opacity:0.85; }
+        .btn-primary  { background:#0057a8; color:#fff; }
+        .btn-cancel   { background:var(--border,#e2e8f0); color:var(--text-color,#1a202c); }
+        .btn-confirm  { background:#38a169; color:#fff; padding:5px 10px; font-size:12px; font-weight:700; border-radius:7px; border:none; cursor:pointer; }
+        .btn-confirm:hover { opacity:0.85; }
+        .btn-view     { background:var(--hover-bg,#f0f4f8); color:var(--text-color,#1a202c); padding:5px 10px; font-size:12px; font-weight:600; border-radius:7px; border:1px solid var(--border,#e2e8f0); cursor:pointer; }
+        .btn-view:hover { border-color:#0057a8; }
+
+        /* ── Table ── */
+        .handover-table { width:100%; border-collapse:collapse; background:var(--card-bg,#fff); border-radius:12px; overflow:hidden; box-shadow:0 2px 8px rgba(0,0,0,0.08); }
+        .handover-table th, .handover-table td { padding:12px 16px; text-align:left; border-bottom:1px solid var(--border,#e2e8f0); font-size:13px; }
+        .handover-table th { background:var(--sidebar-bg,#f7f9fc); font-size:11px; text-transform:uppercase; letter-spacing:0.05em; color:var(--sidebar-text,#718096); font-weight:700; }
+        .handover-table tr:last-child td { border-bottom:none; }
+        .handover-table tr:hover td { background:var(--hover-bg,#f0f4f8); }
+
+        .status-badge { display:inline-block; padding:3px 10px; border-radius:999px; font-size:11px; font-weight:700; }
+        .status-pending   { background:#fef3c7; color:#92400e; }
+        .status-completed { background:#dcfce7; color:#166534; }
+
+        /* ── Modals ── */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.45); z-index:1000; justify-content:center; align-items:center; }
+        .modal-overlay.open { display:flex; }
+        .modal { background:var(--card-bg,#fff); border-radius:16px; padding:32px; width:560px; max-width:96vw; box-shadow:0 8px 32px rgba(0,0,0,0.18); max-height:90vh; overflow-y:auto; }
+        .modal h3 { margin:0 0 20px; font-size:20px; color:var(--text-color,#1a202c); }
+
+        .form-row { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:13px; font-weight:600; margin-bottom:6px; color:var(--text-muted,#4a5568); }
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width:100%; padding:10px 12px; border:1px solid var(--border,#cbd5e0); border-radius:8px;
+            font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#1a202c); box-sizing:border-box;
+        }
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus { outline:none; border-color:#0057a8; }
+        .form-group textarea { min-height:80px; resize:vertical; font-family:inherit; }
+
+        .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; flex-wrap:wrap; }
+        .error-msg { color:#e53e3e; font-size:13px; margin-top:8px; }
+
+        /* ── Photo upload ── */
+        .photo-upload-area { border:2px dashed var(--border,#cbd5e0); border-radius:10px; padding:18px; text-align:center; cursor:pointer; transition:border-color 0.2s,background 0.2s; }
+        .photo-upload-area:hover { border-color:#0057a8; background:var(--hover-bg,#f0f4f8); }
+        .photo-upload-area.has-photo { border-color:#38a169; border-style:solid; }
+        .photo-upload-area p { margin:6px 0 0; font-size:13px; color:var(--text-muted,#718096); }
+        .photo-preview-img { max-width:100%; max-height:120px; border-radius:6px; display:none; margin:8px auto 0; }
+
+        /* ── Signature pad ── */
+        .sig-wrap { border:1px solid var(--border,#cbd5e0); border-radius:10px; overflow:hidden; background:#fff; }
+        .sig-canvas { display:block; width:100%; height:130px; touch-action:none; cursor:crosshair; }
+        .sig-controls { display:flex; gap:8px; padding:8px 10px; background:var(--hover-bg,#f7f9fc); border-top:1px solid var(--border,#e2e8f0); }
+        .sig-clear-btn { font-size:12px; padding:4px 10px; border:1px solid var(--border,#cbd5e0); background:none; border-radius:6px; cursor:pointer; color:var(--text-muted,#718096); }
+        .sig-clear-btn:hover { border-color:#e53e3e; color:#e53e3e; }
+        .sig-hint { font-size:12px; color:var(--text-muted,#718096); margin:0; padding:0; line-height:2.2; }
+
+        /* ── Detail grid ── */
+        .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; margin-bottom:20px; }
+        .detail-item label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.05em; color:var(--text-muted,#718096); margin-bottom:3px; }
+        .detail-item span  { font-size:14px; color:var(--text-color,#1a202c); font-weight:500; }
+
+        .detail-photo { width:100%; max-height:180px; object-fit:cover; border-radius:10px; margin-bottom:12px; display:none; }
+        .sig-display { max-width:100%; height:auto; border:1px solid var(--border,#e2e8f0); border-radius:8px; display:block; margin-top:4px; }
+
+        .divider { border:none; border-top:1px solid var(--border,#e2e8f0); margin:20px 0; }
+
+        .empty-state { text-align:center; padding:40px; color:var(--text-muted,#718096); font-size:14px; }
+        .toast-success { position:fixed; bottom:24px; right:24px; background:#38a169; color:#fff; padding:12px 20px; border-radius:8px; font-size:14px; display:none; z-index:2000; box-shadow:0 4px 12px rgba(0,0,0,0.2); }
+
+        @media (max-width:640px) {
+            .form-row { grid-template-columns:1fr; }
+            .detail-grid { grid-template-columns:1fr; }
+            .handover-table th:nth-child(3),
+            .handover-table td:nth-child(3),
+            .handover-table th:nth-child(4),
+            .handover-table td:nth-child(4) { display:none; }
+        }
+    </style>
+</head>
+<body>
+<div class="app-container">
+
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <img src="/images/INFO_Asset-6-1024x513.png" alt="UVT Logo" class="sidebar-logo">
+            <h2 data-i18n="app_title">Branding App</h2>
         </div>
-    </body>
+        <nav class="sidebar-nav">
+            <span class="nav-section">MODULES</span>
+            <a href="/home"      class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📊</span><span>Dashboard</span></a>
+            <a href="/inventory" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📦</span><span>Inventory</span></a>
+            <a href="/loans"     class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">↔️</span><span>Loans</span><span class="badge red" id="badge-loans"></span></a>
+            <a href="/handover"  class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔄</span><span>Handover</span></a>
+            <span class="nav-section">REPORTS</span>
+            <a href="/reports"       class="nav-item" data-roles="SuperAdmin,Admin"><span class="icon">📈</span><span>Reports</span></a>
+            <a href="/notifications" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔔</span><span>Notifications</span><span class="badge red" id="badge-notifs"></span></a>
+            <span class="nav-section">ADMIN</span>
+            <a href="/admin" class="nav-item" data-roles="SuperAdmin"><span class="icon">👥</span><span>User Management</span></a>
+        </nav>
+        <div class="sidebar-footer">
+            <div class="user-avatar" id="user-initials">?</div>
+            <div class="user-info">
+                <strong id="user-name">Loading...</strong>
+                <span id="user-role-label"></span>
+            </div>
+            <button title="Logout" onclick="logout()" style="background:none;border:none;cursor:pointer;font-size:18px;margin-left:auto;opacity:0.55;padding:4px;line-height:1;">⏏</button>
+        </div>
+    </aside>
+
+    <main class="main-content">
+        <header class="top-header">
+            <h1>Handover Protocol</h1>
+            <div class="top-controls">
+                <label class="theme-switch">
+                    <input type="checkbox" id="theme-toggle">
+                    <span class="slider"><span class="moon-icon">🌙</span><span class="sun-icon">☀️</span><span class="slider-knob"></span></span>
+                </label>
+                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
+            </div>
+        </header>
+
+        <div class="toolbar">
+            <input type="text" id="search-input" class="search-input" placeholder="Search by item, sender, or receiver…" oninput="filterTable()">
+            <select id="filter-status" class="filter-select" onchange="filterTable()">
+                <option value="">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="completed">Completed</option>
+            </select>
+            <button id="create-btn" class="btn btn-primary" onclick="openCreateModal()" style="display:none">
+                + Create Handover
+            </button>
+        </div>
+
+        <div style="overflow-x:auto;">
+            <table class="handover-table">
+                <thead>
+                    <tr>
+                        <th>#</th>
+                        <th>Item</th>
+                        <th>Sender</th>
+                        <th>Receiver</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="handover-tbody">
+                    <tr><td colspan="7" class="empty-state">Loading…</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </main>
+</div>
+
+<!-- ══════════════ Create Handover Modal ══════════════ -->
+<div class="modal-overlay" id="create-modal">
+    <div class="modal">
+        <h3>📋 New Handover Protocol</h3>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Inventory Item <span style="color:#e53e3e">*</span></label>
+                <select id="c-item">
+                    <option value="">— Select item —</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Receiver <span style="color:#e53e3e">*</span></label>
+                <select id="c-receiver">
+                    <option value="">— Select receiver —</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Quantity <span style="color:#e53e3e">*</span></label>
+                <input type="number" id="c-qty" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label>Condition (before handover)</label>
+                <select id="c-condition-before">
+                    <option value="excellent">Excellent</option>
+                    <option value="good" selected>Good</option>
+                    <option value="worn">Worn / Damaged</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label>Photo Before (optional)</label>
+            <div class="photo-upload-area" id="c-photo-area" onclick="document.getElementById('c-photo-input').click()">
+                <span style="font-size:24px">📷</span>
+                <p id="c-photo-label">Click to upload photo</p>
+                <img id="c-photo-preview" class="photo-preview-img" alt="preview">
+            </div>
+            <input type="file" id="c-photo-input" accept="image/*" style="display:none" onchange="handlePhoto(event,'c')">
+        </div>
+
+        <div class="form-group">
+            <label>Notes / Observations</label>
+            <textarea id="c-notes" placeholder="Any relevant notes about the item condition or handover details…"></textarea>
+        </div>
+
+        <div class="form-group">
+            <label>Sender Signature <span style="color:#e53e3e">*</span></label>
+            <div class="sig-wrap">
+                <canvas class="sig-canvas" id="sig-sender" width="500" height="130"></canvas>
+                <div class="sig-controls">
+                    <button class="sig-clear-btn" onclick="clearSig('sig-sender')">✕ Clear</button>
+                    <p class="sig-hint">Draw your signature above</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="error-msg" id="c-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeCreateModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitCreate()">✓ Submit Handover</button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Detail / View Modal ══════════════ -->
+<div class="modal-overlay" id="detail-modal">
+    <div class="modal">
+        <h3>📋 Handover Details</h3>
+
+        <div class="detail-grid" id="detail-grid"></div>
+
+        <div id="detail-photos-section">
+            <hr class="divider">
+            <p style="font-weight:600;margin-bottom:10px;font-size:13px;">Photos</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <p style="font-size:12px;color:var(--text-muted,#718096);margin-bottom:4px;">Before</p>
+                    <img id="detail-photo-before" class="detail-photo" src="" alt="Before">
+                    <p id="detail-no-photo-before" style="font-size:12px;color:var(--text-muted,#718096);">No photo</p>
+                </div>
+                <div>
+                    <p style="font-size:12px;color:var(--text-muted,#718096);margin-bottom:4px;">After</p>
+                    <img id="detail-photo-after" class="detail-photo" src="" alt="After">
+                    <p id="detail-no-photo-after" style="font-size:12px;color:var(--text-muted,#718096);">No photo</p>
+                </div>
+            </div>
+
+            <hr class="divider">
+            <p style="font-weight:600;margin-bottom:10px;font-size:13px;">Signatures</p>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+                <div>
+                    <p style="font-size:12px;color:var(--text-muted,#718096);margin-bottom:4px;">Sender</p>
+                    <img id="detail-sig-sender" class="sig-display" src="" alt="Sender Signature">
+                </div>
+                <div>
+                    <p style="font-size:12px;color:var(--text-muted,#718096);margin-bottom:4px;">Receiver</p>
+                    <img id="detail-sig-receiver" class="sig-display" src="" alt="Receiver Signature" style="display:none">
+                    <p id="detail-no-receiver-sig" style="font-size:12px;color:var(--text-muted,#718096);">Pending confirmation</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-actions" id="detail-actions">
+            <button class="btn btn-cancel" onclick="closeDetail()">Close</button>
+            <button class="btn btn-primary" id="detail-confirm-btn" onclick="openConfirmFromDetail()" style="display:none">
+                ✅ Confirm Receipt
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- ══════════════ Confirm Modal ══════════════ -->
+<div class="modal-overlay" id="confirm-modal">
+    <div class="modal" style="width:500px;">
+        <h3>✅ Confirm Receipt</h3>
+        <p id="confirm-item-label" style="color:var(--text-muted,#718096);font-size:14px;margin:0 0 20px;"></p>
+
+        <div class="form-group">
+            <label>Condition on Receipt</label>
+            <select id="conf-condition">
+                <option value="excellent">Excellent</option>
+                <option value="good" selected>Good</option>
+                <option value="worn">Worn / Damaged</option>
+            </select>
+        </div>
+
+        <div class="form-group">
+            <label>Photo After (optional)</label>
+            <div class="photo-upload-area" id="conf-photo-area" onclick="document.getElementById('conf-photo-input').click()">
+                <span style="font-size:24px">📷</span>
+                <p id="conf-photo-label">Click to upload photo</p>
+                <img id="conf-photo-preview" class="photo-preview-img" alt="preview">
+            </div>
+            <input type="file" id="conf-photo-input" accept="image/*" style="display:none" onchange="handlePhoto(event,'conf')">
+        </div>
+
+        <div class="form-group">
+            <label>Receiver Signature <span style="color:#e53e3e">*</span></label>
+            <div class="sig-wrap">
+                <canvas class="sig-canvas" id="sig-receiver" width="500" height="130"></canvas>
+                <div class="sig-controls">
+                    <button class="sig-clear-btn" onclick="clearSig('sig-receiver')">✕ Clear</button>
+                    <p class="sig-hint">Draw your signature above</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="error-msg" id="conf-error"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeConfirmModal()">Cancel</button>
+            <button class="btn btn-primary" onclick="submitConfirm()">✅ Confirm Receipt</button>
+        </div>
+    </div>
+</div>
+
+<div class="toast-success" id="toast-success"></div>
+
+<script src="/static/langAndDarkMode.js"></script>
+<script>
+    let currentRole = null, currentUserId = null;
+    let allHandovers = [], allInventory = [], allUsers = [];
+    let activeHandoverId = null;
+    let cPhotoBase64 = null, confPhotoBase64 = null;
+
+    // ── Init ────────────────────────────────────────────────────────────────
+    async function initPage() {
+        try {
+            const res = await fetch("/me");
+            if (!res.ok) { window.location.href = "/"; return; }
+            const user = await res.json();
+            currentRole = user.role;
+            currentUserId = user.id;
+            applySidebar(user);
+            applyRoleUI();
+        } catch (_) { window.location.href = "/"; return; }
+
+        await Promise.all([loadHandovers(), loadInventory(), loadUsers()]);
+        initSigPad("sig-sender");
+        initSigPad("sig-receiver");
+    }
+
+    function applySidebar(user) {
+        const name = user.full_name || user.email;
+        document.getElementById("user-name").textContent = name;
+        document.getElementById("user-role-label").textContent = user.role;
+        if (user.full_name) {
+            const initials = user.full_name.trim().split(/\s+/).map(w=>w[0]).join("").slice(0,2).toUpperCase();
+            document.getElementById("user-initials").textContent = initials;
+        }
+        document.querySelectorAll(".nav-item[data-roles]").forEach(el => {
+            el.style.display = el.dataset.roles.split(",").includes(user.role) ? "" : "none";
+        });
+        document.querySelectorAll(".nav-section").forEach(section => {
+            let next = section.nextElementSibling, hasVisible = false;
+            while (next && !next.classList.contains("nav-section")) {
+                if (next.classList.contains("nav-item") && next.style.display !== "none") { hasVisible = true; break; }
+                next = next.nextElementSibling;
+            }
+            section.style.display = hasVisible ? "" : "none";
+        });
+    }
+
+    function applyRoleUI() {
+        const canCreate = ["SuperAdmin","Admin","Coordinator"].includes(currentRole);
+        document.getElementById("create-btn").style.display = canCreate ? "" : "none";
+    }
+
+    // ── Load data ───────────────────────────────────────────────────────────
+    async function loadHandovers() {
+        try {
+            const res = await fetch("/handovers/");
+            if (res.status === 401) { window.location.href = "/"; return; }
+            allHandovers = await res.json();
+            filterTable();
+        } catch (_) {
+            document.getElementById("handover-tbody").innerHTML =
+                '<tr><td colspan="7" class="empty-state" style="color:#e53e3e;">Failed to load handovers.</td></tr>';
+        }
+    }
+
+    async function loadInventory() {
+        try {
+            const res = await fetch("/inventory/");
+            if (!res.ok) return;
+            allInventory = await res.json();
+            populateInventorySelect();
+        } catch (_) {}
+    }
+
+    async function loadUsers() {
+        try {
+            const res = await fetch("/users/");
+            if (!res.ok) return;
+            allUsers = await res.json();
+        } catch (_) {}
+    }
+
+    function populateInventorySelect() {
+        const sel = document.getElementById("c-item");
+        sel.innerHTML = '<option value="">— Select item —</option>';
+        allInventory.forEach(item => {
+            const opt = document.createElement("option");
+            opt.value = item.id;
+            opt.textContent = `${item.name} (${item.inventory_code}) · Qty: ${item.quantity}`;
+            sel.appendChild(opt);
+        });
+    }
+
+    function populateReceiverSelect(excludeUserId) {
+        const sel = document.getElementById("c-receiver");
+        sel.innerHTML = '<option value="">— Select receiver —</option>';
+        allUsers.filter(u => u.id !== excludeUserId).forEach(u => {
+            const opt = document.createElement("option");
+            opt.value = u.id;
+            opt.textContent = u.full_name ? `${u.full_name} (${u.email})` : u.email;
+            sel.appendChild(opt);
+        });
+    }
+
+    // ── Filter & Render ─────────────────────────────────────────────────────
+    function filterTable() {
+        const q  = document.getElementById("search-input").value.toLowerCase();
+        const sf = document.getElementById("filter-status").value;
+        const filtered = allHandovers.filter(h => {
+            const txt = [h.item_name, h.inventory_code, h.sender_name, h.sender_email, h.receiver_name, h.receiver_email].join(" ").toLowerCase();
+            return (!q || txt.includes(q)) && (!sf || h.status === sf);
+        });
+        renderTable(filtered);
+    }
+
+    function renderTable(handovers) {
+        const tbody = document.getElementById("handover-tbody");
+        if (!handovers.length) {
+            tbody.innerHTML = '<tr><td colspan="7" class="empty-state">No handovers found.</td></tr>';
+            return;
+        }
+        tbody.innerHTML = handovers.map(h => {
+            const statusCls = h.status === "completed" ? "status-completed" : "status-pending";
+            const isMyPending = h.status === "pending" && h.receiver_id === currentUserId;
+            const actions = `
+                <button class="btn-view" onclick="openDetail(${h.id})">View</button>
+                ${isMyPending ? `<button class="btn-confirm" onclick="openConfirmModal(${h.id})" style="margin-left:6px;">✅ Confirm</button>` : ""}
+            `;
+            return `<tr>
+                <td style="color:var(--text-muted,#718096);font-size:12px;">#${h.id}</td>
+                <td>
+                    <strong style="font-size:13px;">${esc(h.item_name || "—")}</strong><br>
+                    <code style="font-size:11px;color:var(--text-muted,#718096);">${esc(h.inventory_code || "")}</code>
+                </td>
+                <td>${esc(h.sender_name || "—")}<br>
+                    <span style="font-size:11px;color:var(--text-muted,#718096);">${esc(h.sender_email || "")}</span>
+                </td>
+                <td>${esc(h.receiver_name || "—")}<br>
+                    <span style="font-size:11px;color:var(--text-muted,#718096);">${esc(h.receiver_email || "")}</span>
+                </td>
+                <td>${fmtDate(h.handover_date)}</td>
+                <td><span class="status-badge ${statusCls}">${h.status}</span></td>
+                <td style="white-space:nowrap;">${actions}</td>
+            </tr>`;
+        }).join("");
+    }
+
+    // ── Create Modal ────────────────────────────────────────────────────────
+    async function openCreateModal() {
+        cPhotoBase64 = null;
+        document.getElementById("c-item").value = "";
+        populateReceiverSelect(currentUserId);
+        document.getElementById("c-qty").value = "1";
+        document.getElementById("c-condition-before").value = "good";
+        document.getElementById("c-photo-label").textContent = "Click to upload photo";
+        document.getElementById("c-photo-preview").style.display = "none";
+        document.getElementById("c-photo-area").classList.remove("has-photo");
+        document.getElementById("c-photo-input").value = "";
+        document.getElementById("c-notes").value = "";
+        document.getElementById("c-error").textContent = "";
+        clearSig("sig-sender");
+        document.getElementById("create-modal").classList.add("open");
+    }
+
+    function closeCreateModal() {
+        document.getElementById("create-modal").classList.remove("open");
+        cPhotoBase64 = null;
+    }
+
+    async function submitCreate() {
+        const errEl = document.getElementById("c-error");
+        errEl.textContent = "";
+        const inventoryId = parseInt(document.getElementById("c-item").value);
+        const receiverId  = parseInt(document.getElementById("c-receiver").value);
+        const qty         = parseInt(document.getElementById("c-qty").value, 10);
+        const condBefore  = document.getElementById("c-condition-before").value;
+        const notes       = document.getElementById("c-notes").value.trim();
+
+        if (!inventoryId) { errEl.textContent = "Please select an inventory item."; return; }
+        if (!receiverId)  { errEl.textContent = "Please select a receiver."; return; }
+        if (!qty || qty < 1) { errEl.textContent = "Quantity must be at least 1."; return; }
+        if (isSigEmpty("sig-sender")) { errEl.textContent = "Please draw your signature."; return; }
+
+        const senderSig = getSigBase64("sig-sender");
+
+        const body = {
+            inventory_id: inventoryId,
+            receiver_id:  receiverId,
+            quantity:     qty,
+            condition_before: condBefore,
+            photo_before: cPhotoBase64 || null,
+            notes: notes || null,
+            sender_signature_path: senderSig,
+        };
+
+        try {
+            const res  = await fetch("/handovers/", { method:"POST", headers:{"Content-Type":"application/json"}, body:JSON.stringify(body) });
+            const data = await res.json();
+            if (!res.ok) { errEl.textContent = data.detail || "Failed to create handover."; return; }
+            closeCreateModal();
+            showToast("Handover created. Receiver has been notified.");
+            await loadHandovers();
+        } catch (_) { errEl.textContent = "Server error. Try again."; }
+    }
+
+    // ── Detail Modal ────────────────────────────────────────────────────────
+    function openDetail(id) {
+        const h = allHandovers.find(x => x.id === id);
+        if (!h) return;
+        activeHandoverId = id;
+
+        const statusCls = h.status === "completed" ? "status-completed" : "status-pending";
+        document.getElementById("detail-grid").innerHTML = `
+            <div class="detail-item"><label>Handover #</label><span>#${h.id}</span></div>
+            <div class="detail-item"><label>Status</label><span class="status-badge ${statusCls}">${h.status}</span></div>
+            <div class="detail-item"><label>Item</label><span>${esc(h.item_name || "—")}</span></div>
+            <div class="detail-item"><label>Code</label><span>${esc(h.inventory_code || "—")}</span></div>
+            <div class="detail-item"><label>Sender</label><span>${esc(h.sender_name || "—")}<br><small style="color:var(--text-muted,#718096)">${esc(h.sender_email || "")}</small></span></div>
+            <div class="detail-item"><label>Receiver</label><span>${esc(h.receiver_name || "—")}<br><small style="color:var(--text-muted,#718096)">${esc(h.receiver_email || "")}</small></span></div>
+            <div class="detail-item"><label>Quantity</label><span>${h.quantity}</span></div>
+            <div class="detail-item"><label>Date</label><span>${fmtDate(h.handover_date)}</span></div>
+            <div class="detail-item"><label>Condition Before</label><span>${esc(h.condition_before || "—")}</span></div>
+            <div class="detail-item"><label>Condition After</label><span>${esc(h.condition_after || "—")}</span></div>
+            ${h.notes ? `<div class="detail-item" style="grid-column:1/-1"><label>Notes</label><span>${esc(h.notes)}</span></div>` : ""}
+        `;
+
+        // Photos
+        const photoBefore = document.getElementById("detail-photo-before");
+        const photoAfter  = document.getElementById("detail-photo-after");
+        const noBefore    = document.getElementById("detail-no-photo-before");
+        const noAfter     = document.getElementById("detail-no-photo-after");
+
+        if (h.photo_before) { photoBefore.src = h.photo_before; photoBefore.style.display = "block"; noBefore.style.display = "none"; }
+        else { photoBefore.style.display = "none"; noBefore.style.display = ""; }
+
+        if (h.photo_after) { photoAfter.src = h.photo_after; photoAfter.style.display = "block"; noAfter.style.display = "none"; }
+        else { photoAfter.style.display = "none"; noAfter.style.display = ""; }
+
+        // Signatures
+        const sigSender   = document.getElementById("detail-sig-sender");
+        const sigReceiver = document.getElementById("detail-sig-receiver");
+        const noRecvSig   = document.getElementById("detail-no-receiver-sig");
+
+        sigSender.src = h.sender_signature_path;
+
+        if (h.receiver_signature_path) {
+            sigReceiver.src = h.receiver_signature_path;
+            sigReceiver.style.display = "block";
+            noRecvSig.style.display = "none";
+        } else {
+            sigReceiver.style.display = "none";
+            noRecvSig.style.display = "";
+        }
+
+        // Show confirm button if I'm the receiver and it's pending
+        const confirmBtn = document.getElementById("detail-confirm-btn");
+        confirmBtn.style.display = (h.status === "pending" && h.receiver_id === currentUserId) ? "" : "none";
+
+        document.getElementById("detail-modal").classList.add("open");
+    }
+
+    function closeDetail() {
+        document.getElementById("detail-modal").classList.remove("open");
+        activeHandoverId = null;
+    }
+
+    function openConfirmFromDetail() {
+        const id = activeHandoverId;
+        closeDetail();
+        openConfirmModal(id);
+    }
+
+    // ── Confirm Modal ───────────────────────────────────────────────────────
+    function openConfirmModal(id) {
+        const h = allHandovers.find(x => x.id === id);
+        if (!h) return;
+        activeHandoverId = id;
+        confPhotoBase64 = null;
+
+        document.getElementById("confirm-item-label").textContent =
+            `Item: "${h.item_name}" · ${h.quantity} unit(s) from ${h.sender_name || h.sender_email}`;
+        document.getElementById("conf-condition").value = "good";
+        document.getElementById("conf-photo-label").textContent = "Click to upload photo";
+        document.getElementById("conf-photo-preview").style.display = "none";
+        document.getElementById("conf-photo-area").classList.remove("has-photo");
+        document.getElementById("conf-photo-input").value = "";
+        document.getElementById("conf-error").textContent = "";
+        clearSig("sig-receiver");
+        document.getElementById("confirm-modal").classList.add("open");
+    }
+
+    function closeConfirmModal() {
+        document.getElementById("confirm-modal").classList.remove("open");
+        activeHandoverId = null;
+        confPhotoBase64 = null;
+    }
+
+    async function submitConfirm() {
+        const errEl     = document.getElementById("conf-error");
+        errEl.textContent = "";
+        const condition = document.getElementById("conf-condition").value;
+
+        if (isSigEmpty("sig-receiver")) { errEl.textContent = "Please draw your signature."; return; }
+        const receiverSig = getSigBase64("sig-receiver");
+
+        const body = {
+            condition_after: condition,
+            photo_after: confPhotoBase64 || null,
+            receiver_signature_path: receiverSig,
+        };
+
+        try {
+            const res  = await fetch(`/handovers/${activeHandoverId}/confirm`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(body),
+            });
+            const data = await res.json();
+            if (!res.ok) { errEl.textContent = data.detail || "Failed to confirm handover."; return; }
+            closeConfirmModal();
+            showToast("Handover confirmed successfully!");
+            await loadHandovers();
+        } catch (_) { errEl.textContent = "Server error. Try again."; }
+    }
+
+    // ── Photo upload ────────────────────────────────────────────────────────
+    function handlePhoto(event, prefix) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            const b64 = e.target.result;
+            if (prefix === "c") cPhotoBase64 = b64;
+            else confPhotoBase64 = b64;
+
+            const preview = document.getElementById(`${prefix}-photo-preview`);
+            preview.src = b64;
+            preview.style.display = "block";
+            document.getElementById(`${prefix}-photo-label`).textContent = file.name;
+            document.getElementById(`${prefix}-photo-area`).classList.add("has-photo");
+        };
+        reader.readAsDataURL(file);
+    }
+
+    // ── Signature pad ───────────────────────────────────────────────────────
+    function initSigPad(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const ctx = canvas.getContext("2d");
+        ctx.strokeStyle = "#1a202c";
+        ctx.lineWidth = 2.5;
+        ctx.lineCap = "round";
+        ctx.lineJoin = "round";
+        let drawing = false, lastX = 0, lastY = 0;
+
+        function getPos(e) {
+            const rect = canvas.getBoundingClientRect();
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            if (e.touches) {
+                return [(e.touches[0].clientX - rect.left) * scaleX,
+                        (e.touches[0].clientY - rect.top)  * scaleY];
+            }
+            return [(e.clientX - rect.left) * scaleX,
+                    (e.clientY - rect.top)  * scaleY];
+        }
+
+        canvas.addEventListener("mousedown",  e => { drawing = true; [lastX, lastY] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); });
+        canvas.addEventListener("mousemove",  e => { if (!drawing) return; const [x, y] = getPos(e); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; });
+        canvas.addEventListener("mouseup",    () => drawing = false);
+        canvas.addEventListener("mouseleave", () => drawing = false);
+        canvas.addEventListener("touchstart", e => { e.preventDefault(); drawing = true; [lastX, lastY] = getPos(e); ctx.beginPath(); ctx.moveTo(lastX, lastY); }, {passive:false});
+        canvas.addEventListener("touchmove",  e => { e.preventDefault(); if (!drawing) return; const [x, y] = getPos(e); ctx.lineTo(x, y); ctx.stroke(); lastX = x; lastY = y; }, {passive:false});
+        canvas.addEventListener("touchend",   () => drawing = false);
+    }
+
+    function clearSig(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        canvas.getContext("2d").clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    function getSigBase64(canvasId) {
+        return document.getElementById(canvasId).toDataURL("image/png");
+    }
+
+    function isSigEmpty(canvasId) {
+        const canvas = document.getElementById(canvasId);
+        const data = canvas.getContext("2d").getImageData(0, 0, canvas.width, canvas.height).data;
+        return !Array.from(data).some(v => v > 0);
+    }
+
+    // ── Helpers ─────────────────────────────────────────────────────────────
+    function fmtDate(iso) {
+        if (!iso) return "—";
+        return new Date(iso).toLocaleDateString("en-GB", { day:"2-digit", month:"short", year:"numeric" });
+    }
+
+    function esc(s) {
+        return String(s ?? "").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function showToast(msg) {
+        const el = document.getElementById("toast-success");
+        el.textContent = msg; el.style.display = "block";
+        setTimeout(() => { el.style.display = "none"; }, 3500);
+    }
+
+    async function logout() {
+        await fetch("/logout/", { method: "POST" });
+        window.location.href = "/";
+    }
+
+    initPage();
+</script>
+</body>
 </html>

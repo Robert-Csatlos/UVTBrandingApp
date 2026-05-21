@@ -23,6 +23,7 @@ models.Base.metadata.create_all(bind=engine)
 app = FastAPI(title="UVT Branding App API")
 
 app.mount("/static", StaticFiles(directory="frontend/html/static"), name="static")
+app.mount("/images", StaticFiles(directory="images"), name="images")
 
 app.include_router(notifications_router)
 app.include_router(reports_router)
@@ -93,6 +94,13 @@ def serve_reports(request: Request, db: Session = Depends(get_db)):
     if not user or user.role not in ("SuperAdmin", "Admin"):
         return RedirectResponse(url="/home", status_code=302)
     return FileResponse("frontend/html/reportsDashboard.html")
+
+
+@app.get("/handover")
+def serve_handover(request: Request):
+    if get_session_user_id(request) is None:
+        return RedirectResponse(url="/", status_code=302)
+    return FileResponse("frontend/html/HandoverProtocol.html")
 
 
 @app.get("/admin")
@@ -303,3 +311,42 @@ def delete_user(
         raise HTTPException(status_code=400, detail="Cannot delete your own account")
     crud.delete_user(db, user_id)
     return {"message": "User deleted"}
+
+
+# ─── Users (read-only, all authenticated) ────────────────────────────────────
+
+@app.get("/users/", response_model=list[schemas.User])
+def list_all_users(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(get_current_user),
+):
+    return crud.get_all_users(db)
+
+
+# ─── Handover API ─────────────────────────────────────────────────────────────
+
+@app.get("/handovers/")
+def list_handovers(
+    db: Session = Depends(get_db),
+    _: models.User = Depends(get_current_user),
+):
+    return crud.get_all_handovers(db)
+
+
+@app.post("/handovers/")
+def create_handover(
+    handover: schemas.HandoverCreate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_coordinator_or_above),
+):
+    return crud.create_handover(db, handover, sender_id=current_user.id)
+
+
+@app.post("/handovers/{handover_id}/confirm")
+def confirm_handover(
+    handover_id: int,
+    body: schemas.HandoverConfirm,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user),
+):
+    return crud.confirm_handover(db, handover_id, receiver_id=current_user.id, body=body)

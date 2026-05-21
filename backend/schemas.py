@@ -156,22 +156,41 @@ class Loan(LoanBase):
 
 class HandoverCreate(BaseModel):
     inventory_id: int
+    receiver_id: int
+    quantity: int = Field(ge=1, default=1)
+    condition_before: Optional[str] = None
+    photo_before: Optional[str] = None
+    notes: Optional[str] = None
+    sender_signature_path: str
+
+
+class HandoverConfirm(BaseModel):
+    condition_after: Optional[str] = None
+    photo_after: Optional[str] = None
+    receiver_signature_path: str
+
+
+class HandoverOut(BaseModel):
+    id: int
+    inventory_id: int
     sender_id: int
     receiver_id: int
-    signature_path: str
-
-    @field_validator("receiver_id")
-    @classmethod
-    def validate_users(cls, v, values):
-        if "sender_id" in values and v == values["sender_id"]:
-            raise ValueError("Sender and receiver must be different")
-        return v
-
-
-class Handover(HandoverCreate):
-    id: int
-    pdf_report_path: Optional[str] = None
-    is_confirmed: bool = False
+    quantity: int
+    handover_date: Optional[datetime] = None
+    condition_before: Optional[str] = None
+    condition_after: Optional[str] = None
+    photo_before: Optional[str] = None
+    photo_after: Optional[str] = None
+    notes: Optional[str] = None
+    sender_signature_path: str
+    receiver_signature_path: Optional[str] = None
+    status: str
+    item_name: Optional[str] = None
+    inventory_code: Optional[str] = None
+    sender_name: Optional[str] = None
+    sender_email: Optional[str] = None
+    receiver_name: Optional[str] = None
+    receiver_email: Optional[str] = None
 
     class Config:
         from_attributes = True
