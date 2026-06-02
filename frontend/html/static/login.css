@@ -1,5 +1,5 @@
 /* ═══════════════════════════════════════════════════════════════
-   UVT Branding App — Login Page
+   Branding & Materials Management — Login Page
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
@@ -112,12 +112,19 @@ body > .grid-bg {
 }
 
 /* ── Logo ────────────────────────────────────────────────────── */
+.login-brand {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 26px;
+}
+
 .login-logo {
-    width: 210px;
+    width: 196px;
     height: auto;
     object-fit: contain;
     display: block;
-    margin: 0 auto 28px;
+    margin: 0 auto 22px;
     transition: filter 0.3s, opacity 0.3s;
 }
 
@@ -129,13 +136,34 @@ body > .grid-bg {
 /* ── Home view ───────────────────────────────────────────────── */
 #home-view { text-align: center; }
 
+.app-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    margin-bottom: 14px;
+    border-radius: 999px;
+    background: rgba(0,87,168,0.08);
+    border: 1px solid rgba(0,87,168,0.16);
+    color: var(--accent);
+    font-size: 0.68rem;
+    font-weight: 800;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+}
+
+[data-theme="dark"] .app-badge {
+    background: rgba(96,165,250,0.1);
+    border-color: rgba(96,165,250,0.18);
+}
+
 /* ── Typography ──────────────────────────────────────────────── */
 h1 {
     color: var(--text);
     font-weight: 800;
-    font-size: 1.55rem;
-    letter-spacing: -0.025em;
-    margin-bottom: 10px;
+    font-size: 1.5rem;
+    letter-spacing: 0;
+    margin-bottom: 9px;
     line-height: 1.25;
     transition: color 0.3s;
 }
@@ -156,6 +184,14 @@ p {
     text-align: center;
     margin-bottom: 4px;
     transition: color 0.3s;
+}
+
+.login-subtitle {
+    max-width: 320px;
+    margin: 0 auto;
+    color: var(--muted);
+    font-size: 0.88rem;
+    line-height: 1.55;
 }
 
 /* ── Inputs ──────────────────────────────────────────────────── */
