@@ -2,7 +2,7 @@ from fastapi import FastAPI, Depends, HTTPException, Request, Response
 from fastapi.responses import FileResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 from . import models, schemas, crud
 from .database import engine, get_db, SessionLocal
 from .auth import (
@@ -209,9 +209,11 @@ def get_stats(
 def checkout_item(
     loan: schemas.LoanCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_coordinator_or_above),
+    current_user: models.User = Depends(require_coordinator_or_above),
 ):
-    return crud.create_loan(db, loan)
+    if loan.user_id != current_user.id:
+        raise HTTPException(status_code=403, detail="Cannot create a loan for another user")
+    return crud.create_loan(db, loan, borrower_id=current_user.id)
 
 
 @app.get("/loans/")
@@ -223,8 +225,8 @@ def list_loans(
 
 
 class ReturnBody(BaseModel):
-    photo_checkin: str
-    condition_checkin: str
+    photo_checkin: str = Field(min_length=1)
+    condition_checkin: str = Field(min_length=1)
 
 
 @app.post("/loans/{loan_id}/return")

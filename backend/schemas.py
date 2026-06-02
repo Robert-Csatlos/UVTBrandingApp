@@ -22,7 +22,7 @@ class UserRole(str, Enum):
 class LoanStatus(str, Enum):
     active = "active"
     returned = "returned"
-    late = "late"
+    overdue = "overdue"
 
 
 # --- INVENTORY SCHEMAS ---
@@ -126,12 +126,17 @@ class LoanBase(BaseModel):
 class LoanCreate(LoanBase):
     quantity: int = Field(ge=1, default=1)
     checkout_date: Optional[datetime] = None
-    photo_checkout: str = "pending.jpg"  # path or base64; defaults to placeholder
+    event_date: Optional[datetime] = None
+    reason: Optional[str] = None
+    condition_checkout: str
+    photo_checkout: str = Field(min_length=1)
+    notes: Optional[str] = None
+    accessories: Optional[str] = None
 
 
 class LoanReturn(BaseModel):
-    condition_checkin: Optional[str] = None
-    photo_checkin: Optional[str] = None
+    condition_checkin: str
+    photo_checkin: str = Field(min_length=1)
     notes: Optional[str] = None
 
 
@@ -145,6 +150,9 @@ class Loan(LoanBase):
     condition_checkout: Optional[str] = None
     condition_checkin: Optional[str] = None
     notes: Optional[str] = None
+    reason: Optional[str] = None
+    event_date: Optional[datetime] = None
+    accessories: Optional[str] = None
     is_deteriorated: bool = False
     status: LoanStatus
 

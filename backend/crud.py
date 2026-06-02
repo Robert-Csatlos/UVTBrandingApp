@@ -139,24 +139,29 @@ def get_stats(db: Session):
 
 # --- Loans ---
 
-def create_loan(db: Session, loan: schemas.LoanCreate):
+def create_loan(db: Session, loan: schemas.LoanCreate, borrower_id: int | None = None):
     from .notifications import create_notification, notify_all_admins
+
+    if borrower_id is not None:
+        loan = loan.model_copy(update={"user_id": borrower_id})
 
     item = get_inventory_by_id(db, loan.inventory_id)
     if not item:
         raise HTTPException(status_code=404, detail="Inventory item not found")
+    borrower = get_user_by_id(db, loan.user_id)
+    if not borrower:
+        raise HTTPException(status_code=404, detail="Borrower not found")
     if item.quantity < loan.quantity:
         raise HTTPException(status_code=400, detail=f"Only {item.quantity} units available")
 
     # Deduct stock
     item.quantity -= loan.quantity
 
-    db_loan = models.Loan(**loan.model_dump())
+    db_loan = models.Loan(**loan.model_dump(exclude_none=True))
     db.add(db_loan)
     db.flush()  # populate db_loan.id before notifications
 
-    borrower = get_user_by_id(db, loan.user_id)
-    borrower_name = borrower.full_name or borrower.email if borrower else f"User #{loan.user_id}"
+    borrower_name = borrower.full_name or borrower.email
     deadline_str = loan.deadline_date.strftime("%d %b %Y")
 
     # Notify borrower: loan confirmed
@@ -224,18 +229,27 @@ def get_all_loans(db: Session):
 
 
 def return_loan(db: Session, loan_id: int, photo_checkin: str, condition_checkin: str):
-    from .notifications import create_notification
+    from .notifications import create_notification, notify_all_admins
 
     loan = db.query(models.Loan).filter(models.Loan.id == loan_id).first()
     if not loan:
         raise HTTPException(status_code=404, detail="Loan not found")
     if loan.status == "returned":
         raise HTTPException(status_code=400, detail="Loan already returned")
+    if not photo_checkin:
+        raise HTTPException(status_code=400, detail="Return photo is required")
+    if not condition_checkin:
+        raise HTTPException(status_code=400, detail="Return condition is required")
 
     loan.status = "returned"
     loan.checkin_date = datetime.datetime.now(datetime.timezone.utc)
     loan.photo_checkin = photo_checkin
     loan.condition_checkin = condition_checkin
+    checkout_condition = (loan.condition_checkout or "").strip().lower()
+    return_condition = condition_checkin.strip().lower()
+    condition_changed = bool(checkout_condition and return_condition and checkout_condition != return_condition)
+    if condition_changed:
+        loan.is_deteriorated = True
 
     # Restore stock
     item = get_inventory_by_id(db, loan.inventory_id)
@@ -243,6 +257,8 @@ def return_loan(db: Session, loan_id: int, photo_checkin: str, condition_checkin
         item.quantity += loan.quantity
 
     item_name = item.name if item else f"Item #{loan.inventory_id}"
+    borrower = get_user_by_id(db, loan.user_id)
+    borrower_name = borrower.full_name or borrower.email if borrower else f"User #{loan.user_id}"
 
     # Notify borrower: return confirmed
     create_notification(
@@ -254,6 +270,16 @@ def return_loan(db: Session, loan_id: int, photo_checkin: str, condition_checkin
         loan_id=loan.id,
         inventory_id=loan.inventory_id,
     )
+
+    if condition_changed:
+        notify_all_admins(
+            db,
+            type="deteriorated",
+            title="Item Condition Changed",
+            message=f'"{item_name}" from loan #{loan.id} was returned with condition "{condition_checkin}" after checkout condition "{loan.condition_checkout}" (borrower: {borrower_name}).',
+            loan_id=loan.id,
+            inventory_id=loan.inventory_id,
+        )
 
     db.commit()
     db.refresh(loan)

@@ -84,12 +84,13 @@
         .form-row { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
         .form-group { margin-bottom:14px; }
         .form-group label { display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--text-muted,#64748b); text-transform:uppercase; letter-spacing:0.05em; }
-        .form-group input, .form-group select {
+        .form-group input, .form-group select, .form-group textarea {
             width:100%; padding:10px 13px; border:1.5px solid var(--border,#e2e8f0);
             border-radius:9px; font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#0f172a);
             box-sizing:border-box; font-family:inherit; transition:border-color 0.2s, box-shadow 0.2s;
         }
-        .form-group input:focus, .form-group select:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
+        .form-group textarea { resize:vertical; min-height:70px; }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
         .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
         .error-msg { color:#dc2626; font-size:13px; margin-top:8px; font-weight:500; }
 
@@ -151,41 +152,41 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <img src="/images/INFO_Asset-6-1024x513.png" alt="UVT Logo" class="sidebar-logo">
-            <h2 data-i18n="app_title">Branding App</h2>
+            <h2>Branding App</h2>
         </div>
         <nav class="sidebar-nav">
-            <span class="nav-section" data-i18n="nav_section_modules">MODULES</span>
+            <span class="nav-section">MODULES</span>
             <a href="/home" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">📊</span>
-                <span data-i18n="nav_dashboard">Dashboard</span>
+                <span>Dashboard</span>
             </a>
             <a href="/inventory" class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">📦</span>
-                <span data-i18n="nav_inventory">Inventory</span>
+                <span>Inventory</span>
             </a>
             <a href="/loans" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">↔️</span>
-                <span data-i18n="nav_loans">Loans</span>
+                <span>Loans</span>
                 <span class="badge red" id="badge-loans"></span>
             </a>
             <a href="/handover" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
                 <span class="icon">🔄</span>
-                <span data-i18n="nav_handover">Handover</span>
+                <span>Handover</span>
             </a>
-            <span class="nav-section" data-i18n="nav_section_reports">REPORTS</span>
+            <span class="nav-section">REPORTS</span>
             <a href="/reports" class="nav-item" data-roles="SuperAdmin,Admin">
                 <span class="icon">📈</span>
-                <span data-i18n="nav_reports">Reports</span>
+                <span>Reports</span>
             </a>
             <a href="/notifications" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
                 <span class="icon">🔔</span>
-                <span data-i18n="nav_notifications">Notifications</span>
+                <span>Notifications</span>
                 <span class="badge red" id="badge-notifs"></span>
             </a>
-            <span class="nav-section" data-i18n="nav_section_admin">ADMIN</span>
+            <span class="nav-section">ADMIN</span>
             <a href="/admin" class="nav-item" data-roles="SuperAdmin">
                 <span class="icon">👥</span>
-                <span data-i18n="nav_users">User Management</span>
+                <span>User Management</span>
             </a>
         </nav>
         <div class="sidebar-footer">
@@ -203,7 +204,7 @@
 
     <main class="main-content">
         <header class="top-header">
-            <h1 data-i18n="inv_title">Inventory Management</h1>
+            <h1>Inventory Management</h1>
             <div class="top-controls">
                 <label class="theme-switch">
                     <input type="checkbox" id="theme-toggle">
@@ -213,7 +214,6 @@
                         <span class="slider-knob"></span>
                     </span>
                 </label>
-                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
             </div>
         </header>
 
@@ -320,13 +320,45 @@
                 <input type="number" id="loan-qty" min="1" value="1">
             </div>
             <div class="form-group">
+                <label>Event Date <span style="color:#e53e3e">*</span></label>
+                <input type="date" id="loan-event" onchange="syncLoanDeadline()">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
                 <label>Checkout Date <span style="color:#e53e3e">*</span></label>
                 <input type="date" id="loan-checkout">
             </div>
+            <div class="form-group">
+                <label>Return Deadline <span style="color:#e53e3e">*</span></label>
+                <input type="date" id="loan-deadline" readonly>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Reason <span style="color:#e53e3e">*</span></label>
+                <select id="loan-reason">
+                    <option value="event">Event</option>
+                    <option value="department">Department</option>
+                    <option value="service">Service</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Condition at Checkout <span style="color:#e53e3e">*</span></label>
+                <select id="loan-condition">
+                    <option value="excelenta">Excellent</option>
+                    <option value="buna" selected>Good</option>
+                    <option value="uzata">Worn</option>
+                </select>
+            </div>
         </div>
         <div class="form-group">
-            <label>Return Deadline <span style="color:#e53e3e">*</span></label>
-            <input type="date" id="loan-deadline">
+            <label>Accessories Included</label>
+            <input type="text" id="loan-accessories" placeholder="Cables, stand, case...">
+        </div>
+        <div class="form-group">
+            <label>Notes</label>
+            <textarea id="loan-notes" placeholder="Optional checkout observations"></textarea>
         </div>
         <div class="form-group">
             <label>Photo at Checkout <span style="color:#e53e3e">*</span></label>
@@ -470,12 +502,12 @@
             return;
         }
 
-        // SuperAdmin / Admin → Edit + Delete
-        // Coordinator        → Loan button only
+        // SuperAdmin / Admin → Edit + Delete + Loan
+        // Coordinator        → Edit + Loan
         // Vizualizator       → read-only dash
-        const canEdit   = ["SuperAdmin", "Admin"].includes(currentRole);
+        const canEdit   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
         const canDelete = ["SuperAdmin", "Admin"].includes(currentRole);
-        const canLoan   = currentRole === "Coordinator";
+        const canLoan   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
 
         const statusMap = { new: "New", good: "Good", worn: "Worn" };
 
@@ -583,10 +615,16 @@
         document.getElementById("loan-qty").max   = item.quantity;
 
         const today    = new Date();
-        const deadline = new Date(today);
-        deadline.setDate(deadline.getDate() + 7);
+        const eventDay = new Date(today);
+        const deadline = new Date(eventDay);
+        deadline.setDate(deadline.getDate() + 2);
         document.getElementById("loan-checkout").value = toDateInput(today);
+        document.getElementById("loan-event").value = toDateInput(eventDay);
         document.getElementById("loan-deadline").value = toDateInput(deadline);
+        document.getElementById("loan-reason").value = "event";
+        document.getElementById("loan-condition").value = "buna";
+        document.getElementById("loan-accessories").value = "";
+        document.getElementById("loan-notes").value = "";
 
         document.getElementById("loan-photo-label").textContent = "Click to upload a photo";
         document.getElementById("loan-photo-preview").style.display = "none";
@@ -597,6 +635,14 @@
     }
 
     function toDateInput(d) { return d.toISOString().slice(0, 10); }
+
+    function syncLoanDeadline() {
+        const eventDate = document.getElementById("loan-event").value;
+        if (!eventDate) return;
+        const deadline = new Date(eventDate + "T00:00:00");
+        deadline.setDate(deadline.getDate() + 2);
+        document.getElementById("loan-deadline").value = toDateInput(deadline);
+    }
 
     function closeLoanModal() {
         document.getElementById("loan-modal").classList.remove("open");
@@ -623,20 +669,34 @@
         errEl.textContent = "";
         const qty      = parseInt(document.getElementById("loan-qty").value, 10);
         const checkout = document.getElementById("loan-checkout").value;
+        const eventDay = document.getElementById("loan-event").value;
         const deadline = document.getElementById("loan-deadline").value;
+        const reason   = document.getElementById("loan-reason").value;
+        const condition = document.getElementById("loan-condition").value;
+        const accessories = document.getElementById("loan-accessories").value.trim();
+        const notes = document.getElementById("loan-notes").value.trim();
 
         if (!qty || qty < 1)          { errEl.textContent = "Quantity must be at least 1."; return; }
         if (!checkout)                 { errEl.textContent = "Checkout date is required."; return; }
+        if (!eventDay)                 { errEl.textContent = "Event date is required."; return; }
         if (!deadline)                 { errEl.textContent = "Return deadline is required."; return; }
-        if (deadline <= checkout)      { errEl.textContent = "Deadline must be after checkout date."; return; }
+        if (deadline <= eventDay)      { errEl.textContent = "Deadline must be after event date."; return; }
+        if (!reason)                   { errEl.textContent = "Reason is required."; return; }
+        if (!condition)                { errEl.textContent = "Checkout condition is required."; return; }
         if (!loanPhotoBase64)          { errEl.textContent = "A checkout photo is required."; return; }
 
         const body = {
             inventory_id:   loaningItemId,
             user_id:        currentUserId,
             quantity:       qty,
+            checkout_date:  new Date(checkout + "T00:00:00").toISOString(),
+            event_date:     new Date(eventDay + "T00:00:00").toISOString(),
             deadline_date:  new Date(deadline + "T23:59:59").toISOString(),
+            reason,
+            condition_checkout: condition,
             photo_checkout: loanPhotoBase64,
+            accessories: accessories || null,
+            notes: notes || null,
         };
 
         try {

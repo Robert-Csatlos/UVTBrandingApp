@@ -60,7 +60,10 @@
         .detail-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px 24px; margin-bottom:20px; }
         .detail-item label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted,#64748b); margin-bottom:3px; }
         .detail-item span  { font-size:14px; color:var(--text-color,#0f172a); font-weight:500; }
-        .detail-photo { width:100%; max-height:200px; object-fit:cover; border-radius:11px; margin-bottom:16px; display:none; }
+        .detail-photos { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:16px; }
+        .detail-photo-wrap { display:none; }
+        .detail-photo-wrap label { display:block; font-size:11px; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-muted,#64748b); margin-bottom:6px; }
+        .detail-photo { width:100%; max-height:190px; object-fit:cover; border-radius:11px; display:block; }
         .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:20px; flex-wrap:wrap; }
 
         .form-group { margin-bottom:16px; }
@@ -93,7 +96,7 @@
     <aside class="sidebar">
         <div class="sidebar-header">
             <img src="/images/INFO_Asset-6-1024x513.png" alt="UVT Logo" class="sidebar-logo">
-            <h2 data-i18n="app_title">Branding App</h2>
+            <h2>Branding App</h2>
         </div>
         <nav class="sidebar-nav">
             <span class="nav-section">MODULES</span>
@@ -125,7 +128,6 @@
                     <input type="checkbox" id="theme-toggle">
                     <span class="slider"><span class="moon-icon">🌙</span><span class="sun-icon">☀️</span><span class="slider-knob"></span></span>
                 </label>
-                <button id="lang-toggle" class="flag-btn">🇺🇸</button>
             </div>
         </header>
 
@@ -165,7 +167,16 @@
 <div class="modal-overlay" id="detail-modal">
     <div class="modal">
         <h3>📋 Loan Details</h3>
-        <img id="detail-photo" class="detail-photo" src="" alt="Checkout photo">
+        <div class="detail-photos">
+            <div class="detail-photo-wrap" id="detail-checkout-wrap">
+                <label>Checkout Photo</label>
+                <img id="detail-photo" class="detail-photo" src="" alt="Checkout photo">
+            </div>
+            <div class="detail-photo-wrap" id="detail-return-wrap">
+                <label>Return Photo</label>
+                <img id="detail-return-photo" class="detail-photo" src="" alt="Return photo">
+            </div>
+        </div>
         <div class="detail-grid" id="detail-grid"></div>
         <div class="modal-actions">
             <button class="btn btn-cancel" onclick="closeDetail()">Close</button>
@@ -338,8 +349,13 @@
         const l = allLoans.find(x=>x.id===id); if (!l) return;
         const status = computeStatus(l);
         const photo = document.getElementById("detail-photo");
-        if (l.photo_checkout) { photo.src=l.photo_checkout; photo.style.display="block"; }
-        else photo.style.display="none";
+        const photoWrap = document.getElementById("detail-checkout-wrap");
+        const returnPhoto = document.getElementById("detail-return-photo");
+        const returnWrap = document.getElementById("detail-return-wrap");
+        if (l.photo_checkout) { photo.src=l.photo_checkout; photoWrap.style.display="block"; }
+        else photoWrap.style.display="none";
+        if (l.photo_checkin) { returnPhoto.src=l.photo_checkin; returnWrap.style.display="block"; }
+        else returnWrap.style.display="none";
         const cls = status==="active"?"badge-active":status==="returned"?"badge-returned":"badge-overdue";
         document.getElementById("detail-grid").innerHTML = `
             <div class="detail-item"><label>Loan #</label><span>#${l.id}</span></div>
@@ -351,9 +367,14 @@
             <div class="detail-item"><label>Quantity</label><span>${l.quantity}</span></div>
             <div class="detail-item"><label>Deteriorated</label><span>${l.is_deteriorated?"⚠️ Yes":"No"}</span></div>
             <div class="detail-item"><label>Checkout Date</label><span>${fmtDate(l.checkout_date)}</span></div>
+            <div class="detail-item"><label>Event Date</label><span>${fmtDate(l.event_date)}</span></div>
             <div class="detail-item"><label>Deadline</label><span>${fmtDate(l.deadline_date)}</span></div>
             <div class="detail-item"><label>Returned On</label><span>${fmtDate(l.checkin_date)}</span></div>
-            <div class="detail-item"><label>Return Condition</label><span>${l.condition_checkin||"—"}</span></div>`;
+            <div class="detail-item"><label>Reason</label><span>${esc(l.reason || "—")}</span></div>
+            <div class="detail-item"><label>Checkout Condition</label><span>${esc(l.condition_checkout || "—")}</span></div>
+            <div class="detail-item"><label>Return Condition</label><span>${esc(l.condition_checkin || "—")}</span></div>
+            <div class="detail-item"><label>Accessories</label><span>${esc(l.accessories || "—")}</span></div>
+            <div class="detail-item"><label>Notes</label><span>${esc(l.notes || "—")}</span></div>`;
         document.getElementById("detail-modal").classList.add("open");
     }
     function closeDetail() { document.getElementById("detail-modal").classList.remove("open"); }

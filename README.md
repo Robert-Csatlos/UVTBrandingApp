@@ -204,5 +204,4 @@ All roles can view the dashboard.
 - **Backend:** FastAPI + SQLAlchemy (ORM) + SQLite + bcrypt
 - **Sessions:** In-memory cookie-based sessions (`session_token` httponly cookie)
 - **Frontend:** Vanilla HTML/CSS/JS — no framework, served as static files by FastAPI
-- **i18n:** EN/RO via `langAndDarkMode.js` (localStorage key `lang`)
 - **Theme:** Light/dark via CSS `data-theme` attribute (localStorage key `theme`)
