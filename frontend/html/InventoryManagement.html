@@ -167,7 +167,6 @@
             <a href="/loans" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator">
                 <span class="icon">↔️</span>
                 <span>Loans</span>
-                <span class="badge red" id="badge-loans"></span>
             </a>
             <a href="/handover" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator">
                 <span class="icon">🔄</span>
@@ -412,17 +411,7 @@
             applySidebar(user);
             applyRoleUI();
             await loadInventory();
-            loadBadges();
         } catch (_) { window.location.href = "/"; }
-    }
-
-    async function loadBadges() {
-        try {
-            const res = await fetch("/stats");
-            if (!res.ok) return;
-            const s = await res.json();
-            if (s.overdue > 0) document.getElementById("badge-loans").style.display = "inline-block";
-        } catch (_) {}
     }
 
     function applySidebar(user) {

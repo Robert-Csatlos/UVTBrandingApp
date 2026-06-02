@@ -38,7 +38,6 @@
                    data-roles="SuperAdmin,Admin,Coordinator">
                     <span class="icon">↔️</span>
                     <span>Loans</span>
-                    <span class="badge red" id="badge-loans"></span>
                 </a>
 
                 <!-- Handover: SuperAdmin, Admin, Coordinator -->
@@ -121,12 +120,12 @@
                     <div class="value text-warning" id="stat-borrowed">—</div>
                     <p>active loans right now</p>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card" id="card-overdue">
                     <h3><span class="kpi-icon">🚨</span><span>Overdue</span></h3>
                     <div class="value text-danger" id="stat-overdue">—</div>
                     <p>past return deadline</p>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card" id="card-pending">
                     <h3><span class="kpi-icon">⏰</span><span>Due soon</span></h3>
                     <div class="value text-warning" id="stat-pending">—</div>
                     <p>due within 3 days</p>
@@ -167,8 +166,15 @@
                 document.getElementById("stat-pending").textContent   = s.pending;
                 document.getElementById("stat-low").textContent       = s.low_stock;
 
-                if (s.overdue > 0) document.getElementById("badge-loans").style.display = "inline-block";
+                setKpiAlert("card-overdue", s.overdue > 0, "alert-danger");
+                setKpiAlert("card-pending", s.pending > 0, "alert-warning");
             } catch (_) {}
+        }
+
+        function setKpiAlert(cardId, isActive, className) {
+            const card = document.getElementById(cardId);
+            if (!card) return;
+            card.classList.toggle(className, isActive);
         }
 
         function applySidebar(user) {

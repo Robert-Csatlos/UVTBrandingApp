@@ -102,7 +102,7 @@
             <span class="nav-section">MODULES</span>
             <a href="/home"      class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📊</span><span>Dashboard</span></a>
             <a href="/inventory" class="nav-item" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">📦</span><span>Inventory</span></a>
-            <a href="/loans"     class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">↔️</span><span>Loans</span><span class="badge red" id="badge-loans"></span></a>
+            <a href="/loans"     class="nav-item active" data-roles="SuperAdmin,Admin,Coordinator,Vizualizator"><span class="icon">↔️</span><span>Loans</span></a>
             <a href="/handover"  class="nav-item" data-roles="SuperAdmin,Admin,Coordinator"><span class="icon">🔄</span><span>Handover</span></a>
             <span class="nav-section">REPORTS</span>
             <a href="/reports"       class="nav-item" data-roles="SuperAdmin,Admin"><span class="icon">📈</span><span>Reports</span></a>
@@ -276,18 +276,10 @@
             if (res.status === 401) { window.location.href = "/"; return; }
             allLoans = await res.json();
             filterTable();
-            updateOverdueBadge();
         } catch (_) {
             document.getElementById("loan-tbody").innerHTML =
                 '<tr><td colspan="8" class="empty-state" style="color:#e53e3e;">Failed to load loans.</td></tr>';
         }
-    }
-
-    function updateOverdueBadge() {
-        const n = allLoans.filter(l => computeStatus(l) === "overdue").length;
-        const el = document.getElementById("badge-loans");
-        el.style.display = n > 0 ? "inline-block" : "none";
-        if (n > 0) el.textContent = n;
     }
 
     function filterTable() {
