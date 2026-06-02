@@ -108,34 +108,34 @@
 
             <div class="dashboard-grid">
                 <div class="kpi-card">
-                    <h3 data-i18n="kpi_total">Total materials</h3>
+                    <h3><span class="kpi-icon">📦</span><span data-i18n="kpi_total">Total materials</span></h3>
                     <div class="value" id="stat-total">—</div>
-                    <p data-i18n="kpi_total_desc">in inventory</p>
+                    <p data-i18n="kpi_total_desc">units in inventory</p>
                 </div>
                 <div class="kpi-card">
-                    <h3 data-i18n="kpi_available">Available</h3>
+                    <h3><span class="kpi-icon">✅</span><span data-i18n="kpi_available">Available</span></h3>
                     <div class="value text-success" id="stat-available">—</div>
                     <p data-i18n="kpi_available_desc">ready for loan</p>
                 </div>
                 <div class="kpi-card">
-                    <h3 data-i18n="kpi_borrowed">Borrowed</h3>
+                    <h3><span class="kpi-icon">↔️</span><span data-i18n="kpi_borrowed">Borrowed</span></h3>
                     <div class="value text-warning" id="stat-borrowed">—</div>
-                    <p data-i18n="kpi_borrowed_desc">active right now</p>
+                    <p data-i18n="kpi_borrowed_desc">active loans right now</p>
                 </div>
                 <div class="kpi-card">
-                    <h3 data-i18n="kpi_overdue">Overdue</h3>
+                    <h3><span class="kpi-icon">🚨</span><span data-i18n="kpi_overdue">Overdue</span></h3>
                     <div class="value text-danger" id="stat-overdue">—</div>
-                    <p data-i18n="kpi_overdue_desc">past deadline</p>
+                    <p data-i18n="kpi_overdue_desc">past return deadline</p>
                 </div>
                 <div class="kpi-card">
-                    <h3 data-i18n="kpi_pending">Pending returns</h3>
-                    <div class="value" id="stat-pending">—</div>
+                    <h3><span class="kpi-icon">⏰</span><span data-i18n="kpi_pending">Due soon</span></h3>
+                    <div class="value text-warning" id="stat-pending">—</div>
                     <p data-i18n="kpi_pending_desc">due within 3 days</p>
                 </div>
                 <div class="kpi-card">
-                    <h3 data-i18n="kpi_low">Low stock</h3>
-                    <div class="value text-warning" id="stat-low">—</div>
-                    <p data-i18n="kpi_low_desc">quantity under 20</p>
+                    <h3><span class="kpi-icon">📉</span><span data-i18n="kpi_low">Low stock</span></h3>
+                    <div class="value text-danger" id="stat-low">—</div>
+                    <p data-i18n="kpi_low_desc">items below 20 units</p>
                 </div>
             </div>
         </main>

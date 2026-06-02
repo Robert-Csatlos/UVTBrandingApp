@@ -1,334 +1,363 @@
-/* --- 1. Variables & Themes --- */
+/* ═══════════════════════════════════════════════════════════════
+   UVT Branding App — Login Page
+   ═══════════════════════════════════════════════════════════════ */
+
 :root {
-    --bg-color: #f8f9fa;
-    --text-color: #212529;
-    --accent-color: #3b82f6;
+    --accent:  #0057a8;
     --card-bg: #ffffff;
-    --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-    --input-border: #ddd;
+    --text:    #0f172a;
+    --muted:   #64748b;
+    --border:  #e2e8f0;
+    --input-bg:#f8fafc;
 }
 
 [data-theme="dark"] {
-    --bg-color: #0f172a;
-    --text-color: #f1f5f9;
-    --accent-color: #60a5fa;
-    --card-bg: #1e293b;
-    --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
-    --input-border: #334155;
+    --card-bg: #0e1d35;
+    --text:    #e2e8f0;
+    --muted:   #94a3b8;
+    --border:  rgba(255,255,255,0.1);
+    --input-bg:#132035;
 }
 
-/* --- 2. Global Reset --- */
-* {
-    box-sizing: border-box;
-    margin: 0;
-    padding: 0;
-}
+/* ── Reset ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 body {
-    background-color: var(--bg-color);
-    color: var(--text-color);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
-    transition: background-color 0.4s ease, color 0.4s ease;
+    min-height: 100vh;
     display: flex;
     align-items: center;
     justify-content: center;
-    min-height: 100vh;
     padding: 20px;
-}
-
-/* --- 3. Container & Layout --- */
-.container {
-    background-color: var(--card-bg);
-    padding: 40px;
-    border-radius: 16px;
-    box-shadow: var(--shadow);
-    text-align: center;
-    max-width: 500px;
-    width: 100%;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-font-smoothing: antialiased;
     position: relative;
     overflow: hidden;
-    transition: background-color 0.4s ease, box-shadow 0.4s ease;
+    /* Rich deep navy background */
+    background: #060e20;
+    transition: background 0.3s;
 }
 
+/* Animated gradient orbs */
+body::before {
+    content: '';
+    position: fixed;
+    top: -25%;
+    right: -15%;
+    width: 700px;
+    height: 700px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center,
+        rgba(0, 87, 168, 0.25) 0%,
+        rgba(0, 87, 168, 0.08) 45%,
+        transparent 70%);
+    animation: orb1 18s ease-in-out infinite;
+    pointer-events: none;
+}
+
+body::after {
+    content: '';
+    position: fixed;
+    bottom: -20%;
+    left: -15%;
+    width: 600px;
+    height: 600px;
+    border-radius: 50%;
+    background: radial-gradient(circle at center,
+        rgba(79, 142, 247, 0.15) 0%,
+        rgba(79, 142, 247, 0.04) 50%,
+        transparent 70%);
+    animation: orb2 22s ease-in-out infinite;
+    pointer-events: none;
+}
+
+@keyframes orb1 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%       { transform: translate(-40px, 30px) scale(1.05); }
+}
+@keyframes orb2 {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    50%       { transform: translate(30px, -40px) scale(1.08); }
+}
+
+/* Subtle grid overlay */
+body > .grid-bg {
+    display: none;
+}
+
+/* ── Card ────────────────────────────────────────────────────── */
+.container {
+    background: var(--card-bg);
+    padding: 48px 44px 44px;
+    border-radius: 22px;
+    box-shadow:
+        0 0 0 1px rgba(255,255,255,0.06),
+        0 24px 64px rgba(0,0,0,0.5),
+        0 8px 24px rgba(0,0,0,0.3);
+    max-width: 440px;
+    width: 100%;
+    position: relative;
+    z-index: 1;
+    transition: background 0.3s;
+}
+
+/* Top controls */
 .top-controls {
     position: absolute;
-    top: 20px;
+    top: 18px;
     right: 20px;
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 10px;
+    z-index: 2;
 }
 
-/* --- 4. Interactive Theme Switch --- */
-.theme-switch {
-    position: relative;
-    display: inline-block;
-    width: 54px;
-    height: 28px;
-}
-
-.theme-switch input:not(:checked) + .slider .moon-icon {
-    opacity: 0;
-}
-
-.theme-switch input:checked + .slider .sun-icon {
-    opacity: 0;
-}
-
-.slider {
-    position: absolute;
-    cursor: pointer;
-    top: 0; left: 0; right: 0; bottom: 0;
-    background-color: #cbd5e1;
-    transition: background-color 0.4s;
-    border-radius: 34px;
-}
-
-.sun-icon, .moon-icon {
-    position: absolute;
-    top: 50%;
-    transform: translateY(-50%);
-    font-size: 13px;
-    z-index: 1;
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-.sun-icon { right: 8px; }
-.moon-icon { left: 8px; }
-
-/* The Moving Knob */
-.slider-knob {
-    position: absolute;
-    height: 20px;
-    width: 20px;
-    left: 4px;
-    top: 4px;
-    background-color: white;
-    border-radius: 50%;
-    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-    z-index: 2; 
-}
-
-input:checked + .slider {
-    background-color: #334155;
-}
-
-input:checked + .slider .slider-knob {
-    transform: translateX(26px);
-}
-
-/* --- 5. Language & Flag --- */
-.flag-btn {
-    background: none;
-    border: none;
-    padding: 0;
-    font-size: 1.6rem;
-    cursor: pointer;
-    transition: transform 0.2s ease;
-}
-
-.flag-btn:hover {
-    transform: scale(1.2);
-}
-
-/* --- 6. Typography & Inputs --- */
-h1, h2 {
-    font-size: 2rem;
-    margin-bottom: 1rem;
-    font-weight: 800;
-}
-
-p {
-    margin-bottom: 2rem;
-    line-height: 1.6;
-    opacity: 0.8;
-}
-
-.input-group {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-    margin: 25px 0;
-}
-
-.input-group input {
-    padding: 12px 16px;
-    border-radius: 10px;
-    border: 1px solid var(--input-border);
-    background: var(--bg-color);
-    color: var(--text-color);
-    font-size: 1rem;
-    outline: none;
-    transition: border-color 0.2s;
-}
-
-.input-group input:focus {
-    border-color: var(--accent-color);
-}
-
-/* --- 7. Buttons --- */
-button:not(.flag-btn) {
-    background-color: var(--accent-color);
-    color: white;
-    border: none;
-    padding: 12px 24px;
-    border-radius: 10px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1rem;
-    transition: transform 0.2s ease, filter 0.2s ease, opacity 0.2s ease;
-}
-
-button:not(.flag-btn):hover {
-    transform: translateY(-2px);
-    filter: brightness(1.1);
-}
-
-button:not(.flag-btn):active {
-    transform: translateY(0);
-}
-
-.button-group-vertical {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.uvt-btn {
-    background-color: #2563eb !important;
-}
-
-.back-link {
-    background: none !important;
-    color: var(--text-color) !important;
-    font-size: 0.85rem !important;
-    opacity: 0.6;
-    margin-top: 10px;
-}
-
-.back-link:hover {
-    opacity: 1;
-    text-decoration: underline;
-}
-
-/* --- Login Logo --- */
+/* ── Logo ────────────────────────────────────────────────────── */
 .login-logo {
-    width: 220px;
+    width: 210px;
     height: auto;
     object-fit: contain;
     display: block;
-    margin: 0 auto 20px;
+    margin: 0 auto 28px;
+    transition: filter 0.3s, opacity 0.3s;
 }
 
 [data-theme="dark"] .login-logo {
     filter: brightness(0) invert(1);
-    opacity: 0.9;
+    opacity: 0.88;
 }
 
-/* --- 8. Animations --- */
-.fade-in {
-    animation: fadeInSlide 0.5s ease-out forwards;
+/* ── Home view ───────────────────────────────────────────────── */
+#home-view { text-align: center; }
+
+/* ── Typography ──────────────────────────────────────────────── */
+h1 {
+    color: var(--text);
+    font-weight: 800;
+    font-size: 1.55rem;
+    letter-spacing: -0.025em;
+    margin-bottom: 10px;
+    line-height: 1.25;
+    transition: color 0.3s;
 }
 
-@keyframes fadeInSlide {
-    from {
-        opacity: 0;
-        transform: translateY(15px) scale(0.98);
-    }
-    to {
-        opacity: 1;
-        transform: translateY(0) scale(1);
-    }
+h2 {
+    color: var(--text);
+    font-weight: 700;
+    font-size: 1.35rem;
+    letter-spacing: -0.02em;
+    margin-bottom: 24px;
+    transition: color 0.3s;
 }
 
-/* --- 9. Mobile Responsiveness --- */
-@media (max-width: 480px) {
-    .container {
-        padding: 30px 20px;
-    }
-    
-    .top-controls {
-        top: 15px;
-        right: 15px;
-    }
+p {
+    color: var(--muted);
+    font-size: 0.875rem;
+    line-height: 1.6;
+    text-align: center;
+    margin-bottom: 4px;
+    transition: color 0.3s;
 }
 
-.error-popup {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #ef4444; /* Red error color */
-    color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.2);
+/* ── Inputs ──────────────────────────────────────────────────── */
+.input-group {
     display: flex;
-    align-items: center;
-    gap: 15px;
-    z-index: 100;
-    animation: fadeInSlide 0.3s ease-out forwards;
+    flex-direction: column;
+    gap: 10px;
+    margin: 22px 0;
 }
 
-.close-error-btn {
-    background: none !important;
+.input-group input {
+    width: 100%;
+    padding: 13px 16px;
+    border-radius: 11px;
+    border: 1.5px solid var(--border);
+    background: var(--input-bg);
+    color: var(--text);
+    font-size: 0.9rem;
+    font-family: inherit;
+    outline: none;
+    transition: border-color 0.2s, box-shadow 0.2s, background 0.3s, color 0.3s;
+}
+
+.input-group input:focus {
+    border-color: var(--accent);
+    background: var(--card-bg);
+    box-shadow: 0 0 0 3px rgba(0,87,168,0.12);
+}
+
+.input-group input::placeholder { color: #94a3b8; }
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.button-group-vertical {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+/* Base button reset */
+button:not(.flag-btn) {
     border: none;
-    color: white;
-    font-size: 1.5rem;
+    border-radius: 11px;
     cursor: pointer;
-    padding: 0;
-    line-height: 1;
+    font-weight: 600;
+    font-size: 0.9rem;
+    font-family: inherit;
+    padding: 13px 24px;
+    transition: transform 0.18s, box-shadow 0.18s, filter 0.18s, opacity 0.18s;
+    letter-spacing: 0.01em;
 }
 
-.close-error-btn:hover {
-    transform: scale(1.1) !important;
-    filter: brightness(0.9);
-}
+button:not(.flag-btn):hover { transform: translateY(-1px); }
+button:not(.flag-btn):active { transform: translateY(0); }
 
-.toast-error {
-    position: fixed;       /* Floats relative to the screen */
-    top: 20px;             /* 20px from the top */
-    right: 20px;           /* 20px from the right */
-    background-color: #ef4444; 
+/* Main login trigger */
+.login-main-btn {
+    background: linear-gradient(135deg, #0057a8 0%, #0072d6 100%);
     color: white;
-    padding: 12px 20px;
-    border-radius: 8px;
-    box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.3);
+    padding: 14px 56px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(0,87,168,0.38);
+    margin-top: 6px;
+    display: inline-block;
+}
+.login-main-btn:hover {
+    box-shadow: 0 8px 28px rgba(0,87,168,0.55);
+    filter: brightness(1.06);
+}
+
+/* Submit */
+.login-submit {
+    width: 100%;
+    background: linear-gradient(135deg, #0057a8 0%, #0072d6 100%);
+    color: white;
+    box-shadow: 0 4px 16px rgba(0,87,168,0.3);
+}
+.login-submit:hover {
+    box-shadow: 0 6px 22px rgba(0,87,168,0.48);
+    filter: brightness(1.07);
+}
+
+/* UVT SSO button */
+.uvt-btn {
+    width: 100%;
+    background: transparent;
+    color: var(--accent);
+    border: 1.5px solid rgba(0,87,168,0.28);
+    font-weight: 600;
+}
+.uvt-btn:hover {
+    background: rgba(0,87,168,0.06);
+    border-color: rgba(0,87,168,0.5);
+}
+
+/* Back link */
+.back-link {
+    background: none !important;
+    color: var(--muted);
+    font-size: 0.82rem;
+    font-weight: 500;
+    padding: 8px 12px;
+    box-shadow: none;
+    opacity: 0.8;
+}
+.back-link:hover {
+    color: var(--text);
+    opacity: 1;
+    transform: none;
+    box-shadow: none;
+}
+
+/* ── Theme Switch ────────────────────────────────────────────── */
+.theme-switch {
+    position: relative;
+    display: inline-block;
+    width: 50px; height: 26px;
+}
+.theme-switch input { display: none; }
+.slider {
+    position: absolute; cursor: pointer; inset: 0;
+    background: #cbd5e1; transition: background 0.3s;
+    border-radius: 34px;
+}
+.sun-icon, .moon-icon {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    font-size: 11px; z-index: 1; pointer-events: none;
+    transition: opacity 0.25s;
+}
+.sun-icon  { right: 7px; }
+.moon-icon { left: 7px; opacity: 0; }
+.theme-switch input:not(:checked) + .slider .moon-icon { opacity: 0; }
+.theme-switch input:checked + .slider .sun-icon  { opacity: 0; }
+.theme-switch input:checked + .slider .moon-icon { opacity: 1; }
+.theme-switch input:checked + .slider { background: #1e3355; }
+.slider-knob {
+    position: absolute; height: 18px; width: 18px;
+    left: 4px; top: 4px; background: white; border-radius: 50%;
+    transition: transform 0.3s; z-index: 2;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.22);
+}
+.theme-switch input:checked + .slider .slider-knob { transform: translateX(24px); }
+
+/* ── Flag button ─────────────────────────────────────────────── */
+.flag-btn {
+    background: none; border: none; padding: 0;
+    font-size: 1.45rem; cursor: pointer;
+    transition: transform 0.2s;
+}
+.flag-btn:hover { transform: scale(1.15); }
+
+/* ── Toast notifications ─────────────────────────────────────── */
+.toast-error {
+    position: fixed;
+    top: 22px; right: 22px;
+    background: #dc2626;
+    color: white;
+    padding: 13px 18px;
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(220,38,38,0.35);
     display: flex;
     align-items: center;
-    gap: 15px;
-    z-index: 9999;         /* Ensures it's always on top */
-    font-size: 0.95rem;
+    gap: 12px;
+    z-index: 9999;
+    font-size: 0.875rem;
     font-weight: 500;
-    animation: slideInRight 0.3s ease-out forwards;
+    animation: slideInRight 0.3s ease-out;
 }
 
 .close-toast-btn {
     background: none !important;
-    border: none;
-    color: white;
-    font-size: 1.2rem;
-    cursor: pointer;
-    padding: 0;
-    line-height: 1;
+    border: none !important;
+    color: white !important;
+    font-size: 1.1rem !important;
+    cursor: pointer !important;
+    padding: 0 !important;
+    line-height: 1 !important;
     opacity: 0.8;
-    transition: opacity 0.2s, transform 0.2s !important;
+    transform: none !important;
+    box-shadow: none !important;
+    border-radius: 0 !important;
+    font-weight: 400 !important;
+}
+.close-toast-btn:hover { opacity: 1 !important; transform: none !important; }
+
+/* ── Animations ──────────────────────────────────────────────── */
+.fade-in { animation: fadeInUp 0.38s ease-out; }
+
+@keyframes fadeInUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
 }
 
-.close-toast-btn:hover {
-    opacity: 1;
-    transform: scale(1.1) !important;
-}
-
-/* Custom animation for the corner popup */
 @keyframes slideInRight {
-    from {
-        opacity: 0;
-        transform: translateX(50px);
-    }
-    to {
-        opacity: 1;
-        transform: translateX(0);
-    }
+    from { opacity: 0; transform: translateX(36px); }
+    to   { opacity: 1; transform: translateX(0); }
+}
+
+/* ── Mobile ──────────────────────────────────────────────────── */
+@media (max-width: 480px) {
+    .container { padding: 36px 24px 32px; }
+    .top-controls { top: 14px; right: 14px; }
+    .login-logo { width: 180px; }
 }

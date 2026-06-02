@@ -6,139 +6,57 @@
     <title>SuperAdmin Panel – UVT Branding App</title>
     <link rel="stylesheet" href="/static/home.css">
     <style>
-        .panel-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-        .btn {
-            padding: 10px 20px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            transition: opacity 0.2s;
-        }
-        .btn:hover { opacity: 0.85; }
-        .btn-primary { background: #0057a8; color: #fff; }
-        .btn-danger  { background: #e53e3e; color: #fff; padding: 6px 12px; font-size: 13px; }
-        .btn-edit    { background: #3182ce; color: #fff; padding: 6px 12px; font-size: 13px; }
+        .panel-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:22px; }
 
-        .users-table {
-            width: 100%;
-            border-collapse: collapse;
-            background: var(--card-bg, #fff);
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-        }
-        .users-table th,
-        .users-table td {
-            padding: 14px 18px;
-            text-align: left;
-            border-bottom: 1px solid var(--border, #e2e8f0);
-        }
-        .users-table th {
-            background: var(--sidebar-bg, #f7f9fc);
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
-            color: var(--text-muted, #718096);
-        }
-        .users-table tr:last-child td { border-bottom: none; }
-        .users-table tr:hover td { background: var(--hover-bg, #f0f4f8); }
+        /* ── Buttons ── */
+        .btn { padding:10px 18px; border:none; border-radius:9px; cursor:pointer; font-size:13.5px; font-weight:600; transition:all 0.18s; white-space:nowrap; font-family:inherit; }
+        .btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.12); }
+        .btn-primary { background:linear-gradient(135deg,#0057a8,#0072d6); color:#fff; box-shadow:0 2px 8px rgba(0,87,168,0.25); }
+        .btn-cancel  { background:var(--hover-bg,#f8fafc); color:var(--text-muted,#64748b); border:1px solid var(--border,#e2e8f0); }
+        .btn-cancel:hover { box-shadow:none; }
+        .btn-danger  { background:#dc2626; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(220,38,38,0.2); }
+        .btn-edit    { background:#2563eb; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(37,99,235,0.2); }
 
-        .role-badge {
-            display: inline-block;
-            padding: 3px 10px;
-            border-radius: 999px;
-            font-size: 12px;
-            font-weight: 600;
-        }
-        .role-SuperAdmin  { background: #fef3c7; color: #92400e; }
-        .role-Admin       { background: #dbeafe; color: #1e40af; }
-        .role-Coordinator { background: #dcfce7; color: #166534; }
-        .role-Vizualizator{ background: #f3f4f6; color: #374151; }
+        /* ── Table ── */
+        .users-table { width:100%; border-collapse:collapse; background:var(--card-bg,#fff); border-radius:14px; overflow:hidden; box-shadow:0 2px 12px rgba(0,0,0,0.07); border:1px solid var(--border,#e2e8f0); }
+        .users-table th, .users-table td { padding:14px 18px; text-align:left; border-bottom:1px solid var(--border,#e2e8f0); }
+        .users-table th { background:var(--sidebar-bg,#0c1e3c); color:var(--sidebar-text,#e2e8f0); font-size:11px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700; }
+        .users-table tr:last-child td { border-bottom:none; }
+        .users-table tbody tr { transition:background 0.15s; }
+        .users-table tbody tr:hover td { background:var(--hover-bg,#f8fafc); }
 
-        /* Modal */
-        .modal-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 1000;
-            justify-content: center;
-            align-items: center;
-        }
-        .modal-overlay.open { display: flex; }
-        .modal {
-            background: var(--card-bg, #fff);
-            border-radius: 16px;
-            padding: 32px;
-            width: 420px;
-            max-width: 95vw;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-        }
-        .modal h3 { margin: 0 0 24px; font-size: 20px; }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; margin-bottom: 6px; color: var(--text-muted, #4a5568); }
-        .form-group input,
-        .form-group select {
-            width: 100%;
-            padding: 10px 12px;
-            border: 1px solid var(--border, #cbd5e0);
-            border-radius: 8px;
-            font-size: 14px;
-            background: var(--input-bg, #fff);
-            color: var(--text, #1a202c);
-            box-sizing: border-box;
-        }
-        .form-group input:focus,
-        .form-group select:focus {
-            outline: none;
-            border-color: #0057a8;
-        }
-        .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 24px; }
-        .btn-cancel { background: var(--border, #e2e8f0); color: var(--text, #1a202c); }
+        /* ── Role badges ── */
+        .role-badge { display:inline-block; padding:4px 11px; border-radius:999px; font-size:11.5px; font-weight:700; letter-spacing:0.02em; }
+        .role-SuperAdmin  { background:#fef9c3; color:#713f12; }
+        .role-Admin       { background:#dbeafe; color:#1e40af; }
+        .role-Coordinator { background:#dcfce7; color:#166534; }
+        .role-Vizualizator{ background:#f1f5f9; color:#475569; }
 
-        .error-msg { color: #e53e3e; font-size: 13px; margin-top: 8px; }
+        /* ── Modals ── */
+        .modal-overlay { display:none; position:fixed; inset:0; background:rgba(10,20,40,0.55); z-index:1000; justify-content:center; align-items:center; backdrop-filter:blur(3px); }
+        .modal-overlay.open { display:flex; }
+        .modal { background:var(--card-bg,#fff); border-radius:20px; padding:32px; width:440px; max-width:95vw; box-shadow:0 24px 64px rgba(0,0,0,0.2), 0 8px 24px rgba(0,0,0,0.1); border:1px solid var(--border,#e2e8f0); }
+        .modal h3 { margin:0 0 24px; font-size:1.1rem; font-weight:700; color:var(--text-color,#0f172a); letter-spacing:-0.01em; }
+        .form-group { margin-bottom:16px; }
+        .form-group label { display:block; font-size:12.5px; font-weight:600; margin-bottom:6px; color:var(--text-muted,#64748b); text-transform:uppercase; letter-spacing:0.05em; }
+        .form-group input, .form-group select {
+            width:100%; padding:10px 13px; border:1.5px solid var(--border,#e2e8f0);
+            border-radius:9px; font-size:14px; background:var(--card-bg,#fff);
+            color:var(--text-color,#0f172a); box-sizing:border-box; font-family:inherit; transition:border-color 0.2s, box-shadow 0.2s;
+        }
+        .form-group input:focus, .form-group select:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
+        .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
 
-        /* Delete confirm */
-        .confirm-overlay {
-            display: none;
-            position: fixed;
-            inset: 0;
-            background: rgba(0,0,0,0.45);
-            z-index: 1100;
-            justify-content: center;
-            align-items: center;
-        }
-        .confirm-overlay.open { display: flex; }
-        .confirm-box {
-            background: var(--card-bg, #fff);
-            border-radius: 16px;
-            padding: 28px;
-            width: 340px;
-            text-align: center;
-            box-shadow: 0 8px 32px rgba(0,0,0,0.18);
-        }
-        .confirm-box p { margin: 0 0 20px; font-size: 15px; }
-        .confirm-actions { display: flex; gap: 12px; justify-content: center; }
+        .error-msg { color:#dc2626; font-size:13px; margin-top:8px; font-weight:500; }
 
-        .toast-success {
-            position: fixed;
-            bottom: 24px;
-            right: 24px;
-            background: #38a169;
-            color: #fff;
-            padding: 12px 20px;
-            border-radius: 8px;
-            font-size: 14px;
-            display: none;
-            z-index: 2000;
-        }
+        /* ── Delete confirm ── */
+        .confirm-overlay { display:none; position:fixed; inset:0; background:rgba(10,20,40,0.55); z-index:1100; justify-content:center; align-items:center; backdrop-filter:blur(3px); }
+        .confirm-overlay.open { display:flex; }
+        .confirm-box { background:var(--card-bg,#fff); border-radius:18px; padding:32px; width:360px; text-align:center; box-shadow:0 24px 64px rgba(0,0,0,0.18); border:1px solid var(--border,#e2e8f0); }
+        .confirm-box p { margin:0 0 22px; font-size:15px; color:var(--text-color,#0f172a); line-height:1.5; }
+        .confirm-actions { display:flex; gap:12px; justify-content:center; }
+
+        .toast-success { position:fixed; bottom:24px; right:24px; background:#059669; color:#fff; padding:13px 20px; border-radius:11px; font-size:14px; font-weight:600; display:none; z-index:2000; box-shadow:0 6px 20px rgba(5,150,105,0.3); }
     </style>
 </head>
 <body>

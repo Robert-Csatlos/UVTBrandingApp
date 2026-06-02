@@ -6,25 +6,35 @@
     <title>Notifications – UVT Branding App</title>
     <link rel="stylesheet" href="/static/home.css">
     <style>
+        /* ── Toolbar ── */
         .toolbar {
-            display: flex; gap: 12px; align-items: center;
-            margin-bottom: 20px; flex-wrap: wrap;
+            display: flex; gap: 10px; align-items: center;
+            margin-bottom: 22px; flex-wrap: wrap;
         }
         .filter-btn {
-            padding: 8px 16px; border-radius: 999px; border: 1px solid var(--border, #cbd5e0);
+            padding: 7px 16px; border-radius: 999px;
+            border: 1.5px solid var(--border, #e2e8f0);
             background: var(--card-bg, #fff); color: var(--text-muted, #718096);
-            font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.15s;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: all 0.18s; white-space: nowrap;
         }
-        .filter-btn:hover  { border-color: #0057a8; color: #0057a8; }
-        .filter-btn.active { background: #0057a8; color: #fff; border-color: #0057a8; }
+        .filter-btn:hover  { border-color: #0057a8; color: #0057a8; background: rgba(0,87,168,0.05); }
+        .filter-btn.active { background: linear-gradient(135deg,#0057a8,#0072d6); color: #fff; border-color: transparent; box-shadow: 0 3px 10px rgba(0,87,168,0.3); }
         .toolbar-right { margin-left: auto; display: flex; gap: 8px; }
         .btn {
-            padding: 8px 16px; border: none; border-radius: 8px; cursor: pointer;
-            font-size: 13px; font-weight: 600; transition: opacity 0.2s;
+            padding: 8px 16px; border: none; border-radius: 9px; cursor: pointer;
+            font-size: 13px; font-weight: 600; transition: all 0.18s; white-space: nowrap;
         }
-        .btn:hover { opacity: 0.85; }
-        .btn-ghost { background: transparent; border: 1px solid var(--border, #cbd5e0); color: var(--text-muted, #718096); }
-        .btn-danger-outline { background: transparent; border: 1px solid #e53e3e; color: #e53e3e; }
+        .btn:hover { transform: translateY(-1px); }
+        .btn-ghost {
+            background: transparent; border: 1.5px solid var(--border, #e2e8f0);
+            color: var(--text-muted, #718096);
+        }
+        .btn-ghost:hover { border-color: #0057a8; color: #0057a8; }
+        .btn-danger-outline {
+            background: transparent; border: 1.5px solid #e53e3e; color: #e53e3e;
+        }
+        .btn-danger-outline:hover { background: rgba(229,62,62,0.06); }
 
         /* ── Notification list ── */
         .notif-list { display: flex; flex-direction: column; gap: 10px; }
@@ -32,79 +42,59 @@
         .notif-card {
             display: flex; gap: 16px; align-items: flex-start;
             background: var(--card-bg, #fff);
-            border-radius: 12px; padding: 16px 20px;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            border-radius: 14px; padding: 16px 20px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+            border: 1px solid var(--border, #e2e8f0);
             border-left: 4px solid transparent;
-            cursor: pointer; transition: box-shadow 0.15s, background 0.15s;
+            cursor: pointer; transition: box-shadow 0.18s, transform 0.18s;
             position: relative;
         }
-        .notif-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.1); }
-        .notif-card.unread { border-left-color: #0057a8; }
-        .notif-card.unread { background: color-mix(in srgb, var(--card-bg, #fff) 95%, #0057a8); }
+        .notif-card:hover { box-shadow: 0 6px 24px rgba(0,0,0,0.1); transform: translateY(-1px); }
+        .notif-card.unread { border-left-color: #0057a8; background: color-mix(in srgb, var(--card-bg,#fff) 95%, #0057a8); }
 
         /* type accent colours */
         .notif-card.type-loan_made    { border-left-color: #3b82f6; }
         .notif-card.type-due_soon     { border-left-color: #f59e0b; }
         .notif-card.type-overdue      { border-left-color: #e53e3e; }
-        .notif-card.type-returned     { border-left-color: #38a169; }
+        .notif-card.type-returned     { border-left-color: #22c55e; }
         .notif-card.type-deteriorated { border-left-color: #9333ea; }
         .notif-card.type-low_stock    { border-left-color: #f97316; }
         .notif-card.type-manual       { border-left-color: #0057a8; }
 
         .notif-icon {
-            font-size: 22px; flex-shrink: 0;
+            font-size: 20px; flex-shrink: 0;
             width: 44px; height: 44px;
             background: var(--hover-bg, #f0f4f8);
-            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            border-radius: 12px; display: flex; align-items: center; justify-content: center;
         }
         .notif-body { flex: 1; min-width: 0; }
-        .notif-title {
-            font-size: 14px; font-weight: 700;
-            color: var(--text-color, #1a202c); margin-bottom: 4px;
-        }
-        .notif-message {
-            font-size: 13px; color: var(--text-muted, #4a5568);
-            line-height: 1.5; white-space: pre-wrap;
-        }
-        .notif-meta {
-            font-size: 11px; color: var(--text-muted, #718096);
-            margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap;
-        }
+        .notif-title { font-size: 14px; font-weight: 700; color: var(--text-color, #1a202c); margin-bottom: 4px; }
+        .notif-message { font-size: 13px; color: var(--text-muted, #4a5568); line-height: 1.5; white-space: pre-wrap; }
+        .notif-meta { font-size: 11px; color: var(--text-muted, #718096); margin-top: 6px; display: flex; gap: 12px; flex-wrap: wrap; }
         .notif-meta span { display: flex; align-items: center; gap: 3px; }
 
-        .unread-dot {
-            width: 8px; height: 8px; border-radius: 50%;
-            background: #0057a8; flex-shrink: 0; margin-top: 6px;
-        }
+        .unread-dot { width: 8px; height: 8px; border-radius: 50%; background: #0057a8; flex-shrink: 0; margin-top: 6px; }
 
-        .notif-actions {
-            display: flex; gap: 6px; flex-shrink: 0; align-items: center;
-        }
-        .icon-btn {
-            background: none; border: none; cursor: pointer; font-size: 16px;
-            opacity: 0.45; transition: opacity 0.15s; padding: 4px;
-        }
+        .notif-actions { display: flex; gap: 6px; flex-shrink: 0; align-items: center; }
+        .icon-btn { background: none; border: none; cursor: pointer; font-size: 16px; opacity: 0.4; transition: opacity 0.15s; padding: 4px; }
         .icon-btn:hover { opacity: 1; }
 
         /* ── Empty state ── */
-        .empty-state {
-            text-align: center; padding: 60px 20px;
-            color: var(--text-muted, #718096); font-size: 15px;
-        }
+        .empty-state { text-align: center; padding: 60px 20px; color: var(--text-muted, #718096); font-size: 15px; }
         .empty-state .empty-icon { font-size: 48px; margin-bottom: 12px; }
 
-        /* ── Unread badge in header ── */
-        .unread-summary {
-            font-size: 13px; color: var(--text-muted, #718096);
-            margin-left: 4px;
-        }
+        /* ── Unread summary ── */
+        .unread-summary { font-size: 13px; color: var(--text-muted, #718096); margin-left: 4px; }
 
+        /* ── Toast ── */
         .toast-success {
             position: fixed; bottom: 24px; right: 24px;
-            background: #38a169; color: #fff; padding: 12px 20px;
-            border-radius: 8px; font-size: 14px; display: none;
-            z-index: 2000; box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            background: #059669; color: #fff; padding: 13px 22px;
+            border-radius: 11px; font-size: 14px; font-weight: 600; display: none;
+            z-index: 2000; box-shadow: 0 6px 20px rgba(5,150,105,0.35);
+            animation: slideUp 0.3s ease-out;
         }
+        @keyframes slideUp { from { opacity:0; transform:translateY(16px); } to { opacity:1; transform:translateY(0); } }
     </style>
 </head>
 <body>
