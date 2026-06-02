@@ -35,6 +35,7 @@
         .btn-danger  { background:#dc2626; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(220,38,38,0.2); }
         .btn-edit    { background:#2563eb; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(37,99,235,0.2); }
         .btn-loan    { background:linear-gradient(135deg,#0057a8,#0072d6); color:#fff; padding:6px 12px; font-size:12.5px; }
+        .btn-view    { background:var(--hover-bg,#f8fafc); color:var(--text-color,#0f172a); border:1px solid var(--border,#e2e8f0); padding:6px 12px; font-size:12.5px; }
 
         /* ── Table ── */
         .inv-table {
@@ -138,6 +139,9 @@
             box-shadow:0 6px 20px rgba(5,150,105,0.3);
             animation:slideUp 0.3s ease-out;
         }
+        .variant-table { width:100%; border-collapse:collapse; margin-top:12px; }
+        .variant-table th, .variant-table td { padding:10px 12px; border-bottom:1px solid var(--border,#e2e8f0); text-align:left; font-size:13px; }
+        .variant-table th { color:var(--text-muted,#64748b); text-transform:uppercase; font-size:11px; letter-spacing:0.06em; }
         @keyframes slideUp { from { opacity:0; transform:translateY(12px); } to { opacity:1; transform:translateY(0); } }
 
         @media (max-width:640px) {
@@ -223,7 +227,7 @@
                 <option value="">All Statuses</option>
                 <option value="new">New</option>
                 <option value="good">Good</option>
-                <option value="worn">Worn</option>
+                <option value="worn">Worn / Damaged</option>
             </select>
             <select id="filter-category" class="filter-select" onchange="filterTable()">
                 <option value="">All Categories</option>
@@ -271,8 +275,8 @@
         </div>
         <div class="form-row">
             <div class="form-group">
-                <label>Inventory Code</label>
-                <input type="text" id="field-code" placeholder="INV-001">
+                <label>Base / Variant Inventory Code</label>
+                <input type="text" id="field-code" placeholder="BAN-001">
             </div>
             <div class="form-group">
                 <label>Quantity</label>
@@ -285,7 +289,7 @@
                 <select id="field-status">
                     <option value="new">New</option>
                     <option value="good">Good</option>
-                    <option value="worn">Worn</option>
+                    <option value="worn">Worn / Damaged</option>
                 </select>
             </div>
             <div class="form-group">
@@ -306,6 +310,18 @@
 </div>
 
 <!-- ══════════════ Loan Modal ══════════════ -->
+<!-- Variants Modal -->
+<div class="modal-overlay" id="variants-modal">
+    <div class="modal">
+        <h3 id="variants-title">Condition Variants</h3>
+        <div id="variants-summary" class="loan-item-info"></div>
+        <div id="variants-content"></div>
+        <div class="modal-actions">
+            <button class="btn btn-cancel" onclick="closeVariantsModal()">Close</button>
+        </div>
+    </div>
+</div>
+
 <div class="modal-overlay" id="loan-modal">
     <div class="modal">
         <h3>📦 Loan Item</h3>
@@ -344,10 +360,10 @@
             </div>
             <div class="form-group">
                 <label>Condition at Checkout <span style="color:#e53e3e">*</span></label>
-                <select id="loan-condition">
-                    <option value="excelenta">Excellent</option>
-                    <option value="buna" selected>Good</option>
-                    <option value="uzata">Worn</option>
+                <select id="loan-condition" disabled>
+                    <option value="new">New</option>
+                    <option value="good" selected>Good</option>
+                    <option value="worn">Worn / Damaged</option>
                 </select>
             </div>
         </div>
@@ -493,12 +509,12 @@
 
         // SuperAdmin / Admin → Edit + Delete + Loan
         // Coordinator        → Edit + Loan
-        // Vizualizator       → read-only dash
+        // Vizualizator       → variants/details only
         const canEdit   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
         const canDelete = ["SuperAdmin", "Admin"].includes(currentRole);
         const canLoan   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
 
-        const statusMap = { new: "New", good: "Good", worn: "Worn" };
+        const statusMap = { new: "New", good: "Good", worn: "Worn / Damaged" };
 
         tbody.innerHTML = items.map(item => `
             <tr>
@@ -510,10 +526,10 @@
                 <td>${esc(item.location)}</td>
                 <td>${esc(item.responsible_person)}</td>
                 <td style="white-space:nowrap;">
+                    <button class="btn btn-view" onclick="openVariantsModal(${item.id})">Variants</button>
                     ${canEdit   ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>` : ""}
                     ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">Delete</button>` : ""}
                     ${canLoan   ? `<button class="btn btn-loan"   onclick="openLoanModal(${item.id})">📦 Loan</button>` : ""}
-                    ${!canEdit && !canDelete && !canLoan ? '<span style="color:#718096;font-size:13px;">—</span>' : ""}
                 </td>
             </tr>
         `).join("");
@@ -523,6 +539,14 @@
         return String(s ?? "")
             .replace(/&/g,"&amp;").replace(/</g,"&lt;")
             .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function baseInventoryCode(code) {
+        return String(code || "").trim().toUpperCase().replace(/-(N|G|W)$/i, "");
+    }
+
+    function conditionLabel(status) {
+        return ({ new: "New", good: "Good", worn: "Worn / Damaged" })[status] || status || "—";
     }
 
     // ── Add / Edit Modal ───────────────────────────────────────────────
@@ -546,7 +570,7 @@
         document.getElementById("modal-submit-btn").textContent = "Save";
         document.getElementById("field-name").value        = item.name;
         document.getElementById("field-category").value    = item.category;
-        document.getElementById("field-code").value        = item.inventory_code;
+        document.getElementById("field-code").value        = baseInventoryCode(item.inventory_code);
         document.getElementById("field-qty").value         = item.quantity;
         document.getElementById("field-status").value      = item.status;
         document.getElementById("field-location").value    = item.location;
@@ -590,6 +614,39 @@
     }
 
     // ── Loan Modal ─────────────────────────────────────────────────────
+    function openVariantsModal(id) {
+        const item = allItems.find(i => i.id === id);
+        if (!item) return;
+        const baseCode = baseInventoryCode(item.inventory_code);
+        const variants = allItems
+            .filter(i => baseInventoryCode(i.inventory_code) === baseCode)
+            .sort((a, b) => ["new", "good", "worn"].indexOf(a.status) - ["new", "good", "worn"].indexOf(b.status));
+        const total = variants.reduce((sum, v) => sum + Number(v.quantity || 0), 0);
+
+        document.getElementById("variants-title").textContent = `${item.name} Variants`;
+        document.getElementById("variants-summary").innerHTML =
+            `<strong>${esc(baseCode)}</strong><span>Total quantity: ${total}</span>`;
+        document.getElementById("variants-content").innerHTML = `
+            <table class="variant-table">
+                <thead><tr><th>Variant Code</th><th>Condition</th><th>Qty</th><th>Location</th></tr></thead>
+                <tbody>
+                    ${variants.map(v => `
+                        <tr>
+                            <td><code>${esc(v.inventory_code)}</code></td>
+                            <td><span class="status-badge status-${v.status}">${conditionLabel(v.status)}</span></td>
+                            <td>${v.quantity}</td>
+                            <td>${esc(v.location)}</td>
+                        </tr>
+                    `).join("")}
+                </tbody>
+            </table>`;
+        document.getElementById("variants-modal").classList.add("open");
+    }
+
+    function closeVariantsModal() {
+        document.getElementById("variants-modal").classList.remove("open");
+    }
+
     function openLoanModal(id) {
         const item = allItems.find(i => i.id === id);
         if (!item) return;
@@ -611,7 +668,7 @@
         document.getElementById("loan-event").value = toDateInput(eventDay);
         document.getElementById("loan-deadline").value = toDateInput(deadline);
         document.getElementById("loan-reason").value = "event";
-        document.getElementById("loan-condition").value = "buna";
+        document.getElementById("loan-condition").value = item.status;
         document.getElementById("loan-accessories").value = "";
         document.getElementById("loan-notes").value = "";
 

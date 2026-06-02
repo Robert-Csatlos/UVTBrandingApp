@@ -8,8 +8,123 @@ import datetime
 
 # --- Inventory ---
 
+CONDITION_SUFFIXES = {
+    "new": "N",
+    "good": "G",
+    "worn": "W",
+}
+
+CONDITION_ALIASES = {
+    "n": "new",
+    "new": "new",
+    "nou": "new",
+    "excellent": "new",
+    "excelenta": "new",
+    "excelentă": "new",
+    "g": "good",
+    "good": "good",
+    "bun": "good",
+    "buna": "good",
+    "bună": "good",
+    "w": "worn",
+    "worn": "worn",
+    "damaged": "worn",
+    "worn/damaged": "worn",
+    "uzat": "worn",
+    "uzata": "worn",
+    "uzată": "worn",
+}
+
+
+def normalize_condition(condition) -> str:
+    raw = condition.value if hasattr(condition, "value") else condition
+    key = str(raw or "").strip().lower()
+    normalized = CONDITION_ALIASES.get(key)
+    if not normalized:
+        raise HTTPException(status_code=400, detail="Invalid condition")
+    return normalized
+
+
+def get_base_inventory_code(inventory_code: str) -> str:
+    code = str(inventory_code or "").strip().upper()
+    for suffix in CONDITION_SUFFIXES.values():
+        marker = f"-{suffix}"
+        if code.endswith(marker):
+            return code[: -len(marker)]
+    return code
+
+
+def get_variant_inventory_code(inventory_code: str, condition: str) -> str:
+    status = normalize_condition(condition)
+    return f"{get_base_inventory_code(inventory_code)}-{CONDITION_SUFFIXES[status]}"
+
+
+def get_condition_variant(db: Session, source_item: models.Inventory, condition: str):
+    variant_code = get_variant_inventory_code(source_item.inventory_code, condition)
+    return db.query(models.Inventory).filter(models.Inventory.inventory_code == variant_code).first()
+
+
+def get_or_create_condition_variant(db: Session, source_item: models.Inventory, condition: str):
+    status = normalize_condition(condition)
+    variant = get_condition_variant(db, source_item, status)
+    if variant:
+        return variant
+
+    variant = models.Inventory(
+        name=source_item.name,
+        category=source_item.category,
+        inventory_code=get_variant_inventory_code(source_item.inventory_code, status),
+        quantity=0,
+        status=status,
+        location=source_item.location,
+        responsible_person=source_item.responsible_person,
+        photo_path=source_item.photo_path,
+        qr_code_path="pending.png",
+    )
+    db.add(variant)
+    db.flush()
+    return variant
+
+
+def migrate_inventory_variant_codes(db: Session):
+    items = db.query(models.Inventory).all()
+    changed = False
+    for item in items:
+        target_code = get_variant_inventory_code(item.inventory_code, item.status)
+        if item.inventory_code == target_code:
+            continue
+        existing = db.query(models.Inventory).filter(
+            models.Inventory.inventory_code == target_code,
+            models.Inventory.id != item.id,
+        ).first()
+        if existing:
+            continue
+        item.inventory_code = target_code
+        changed = True
+    if changed:
+        db.commit()
+
+
 def create_inventory(db: Session, item: schemas.InventoryCreate):
-    db_item = models.Inventory(**item.model_dump(), photo_path="pending.jpg", qr_code_path="pending.png")
+    data = item.model_dump()
+    data["status"] = normalize_condition(data["status"])
+    data["inventory_code"] = get_variant_inventory_code(data["inventory_code"], data["status"])
+
+    existing = db.query(models.Inventory).filter(
+        models.Inventory.inventory_code == data["inventory_code"]
+    ).first()
+    if existing:
+        existing.name = data["name"]
+        existing.category = data["category"]
+        existing.quantity += data["quantity"]
+        existing.status = data["status"]
+        existing.location = data["location"]
+        existing.responsible_person = data["responsible_person"]
+        db.commit()
+        db.refresh(existing)
+        return existing
+
+    db_item = models.Inventory(**data, photo_path="pending.jpg", qr_code_path="pending.png")
     db.add(db_item)
     db.commit()
     db.refresh(db_item)
@@ -28,7 +143,21 @@ def update_inventory(db: Session, item_id: int, update: schemas.InventoryUpdate)
     item = get_inventory_by_id(db, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
-    for field, value in update.model_dump(exclude_none=True).items():
+    data = update.model_dump(exclude_none=True)
+    if "status" in data:
+        data["status"] = normalize_condition(data["status"])
+    target_status = data.get("status", item.status)
+    target_code_source = data.get("inventory_code", item.inventory_code)
+    if "status" in data or "inventory_code" in data:
+        data["inventory_code"] = get_variant_inventory_code(target_code_source, target_status)
+        existing = db.query(models.Inventory).filter(
+            models.Inventory.inventory_code == data["inventory_code"],
+            models.Inventory.id != item_id,
+        ).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="That condition variant already exists")
+
+    for field, value in data.items():
         setattr(item, field, value if not hasattr(value, "value") else value.value)
     db.commit()
     db.refresh(item)
@@ -154,6 +283,8 @@ def create_loan(db: Session, loan: schemas.LoanCreate, borrower_id: int | None =
     if item.quantity < loan.quantity:
         raise HTTPException(status_code=400, detail=f"Only {item.quantity} units available")
 
+    loan = loan.model_copy(update={"condition_checkout": normalize_condition(item.status)})
+
     # Deduct stock
     item.quantity -= loan.quantity
 
@@ -244,17 +375,18 @@ def return_loan(db: Session, loan_id: int, photo_checkin: str, condition_checkin
     loan.status = "returned"
     loan.checkin_date = datetime.datetime.now(datetime.timezone.utc)
     loan.photo_checkin = photo_checkin
-    loan.condition_checkin = condition_checkin
-    checkout_condition = (loan.condition_checkout or "").strip().lower()
-    return_condition = condition_checkin.strip().lower()
-    condition_changed = bool(checkout_condition and return_condition and checkout_condition != return_condition)
+    item = get_inventory_by_id(db, loan.inventory_id)
+    return_condition = normalize_condition(condition_checkin)
+    checkout_condition = normalize_condition(loan.condition_checkout or (item.status if item else None))
+    loan.condition_checkin = return_condition
+    condition_changed = checkout_condition != return_condition
     if condition_changed:
         loan.is_deteriorated = True
 
-    # Restore stock
-    item = get_inventory_by_id(db, loan.inventory_id)
+    # Restore stock to the condition variant that was actually returned.
     if item:
-        item.quantity += loan.quantity
+        returned_variant = get_or_create_condition_variant(db, item, return_condition)
+        returned_variant.quantity += loan.quantity
 
     item_name = item.name if item else f"Item #{loan.inventory_id}"
     borrower = get_user_by_id(db, loan.user_id)
@@ -276,7 +408,7 @@ def return_loan(db: Session, loan_id: int, photo_checkin: str, condition_checkin
             db,
             type="deteriorated",
             title="Item Condition Changed",
-            message=f'"{item_name}" from loan #{loan.id} was returned with condition "{condition_checkin}" after checkout condition "{loan.condition_checkout}" (borrower: {borrower_name}).',
+            message=f'"{item_name}" from loan #{loan.id} was returned with condition "{return_condition}" after checkout condition "{checkout_condition}" (borrower: {borrower_name}).',
             loan_id=loan.id,
             inventory_id=loan.inventory_id,
         )

@@ -19,6 +19,8 @@ from .notifications import router as notifications_router, run_scheduled_checks
 from .reports import router as reports_router
 
 models.Base.metadata.create_all(bind=engine)
+with SessionLocal() as db:
+    crud.migrate_inventory_variant_codes(db)
 
 app = FastAPI(title="UVT Branding App API")
 

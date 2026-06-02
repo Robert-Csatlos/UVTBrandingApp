@@ -201,9 +201,9 @@
         <div class="form-group">
             <label>Condition on Return</label>
             <select id="checkin-condition">
-                <option value="excelenta">Excellent</option>
-                <option value="buna" selected>Good</option>
-                <option value="uzata">Worn / Damaged</option>
+                <option value="new">New</option>
+                <option value="good" selected>Good</option>
+                <option value="worn">Worn / Damaged</option>
             </select>
         </div>
         <div class="error-msg" id="checkin-error"></div>
@@ -335,6 +335,9 @@
     }
     function daysDiff(iso) { return Math.floor((Date.now()-new Date(iso))/86400000); }
     function esc(s) { return String(s??"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+    function conditionLabel(status) {
+        return ({ new: "New", good: "Good", worn: "Worn / Damaged", buna: "Good", uzata: "Worn / Damaged", excelenta: "New" })[status] || status || "—";
+    }
 
     // ── Detail ──
     function openDetail(id) {
@@ -363,8 +366,8 @@
             <div class="detail-item"><label>Deadline</label><span>${fmtDate(l.deadline_date)}</span></div>
             <div class="detail-item"><label>Returned On</label><span>${fmtDate(l.checkin_date)}</span></div>
             <div class="detail-item"><label>Reason</label><span>${esc(l.reason || "—")}</span></div>
-            <div class="detail-item"><label>Checkout Condition</label><span>${esc(l.condition_checkout || "—")}</span></div>
-            <div class="detail-item"><label>Return Condition</label><span>${esc(l.condition_checkin || "—")}</span></div>
+            <div class="detail-item"><label>Checkout Condition</label><span>${esc(conditionLabel(l.condition_checkout))}</span></div>
+            <div class="detail-item"><label>Return Condition</label><span>${esc(conditionLabel(l.condition_checkin))}</span></div>
             <div class="detail-item"><label>Accessories</label><span>${esc(l.accessories || "—")}</span></div>
             <div class="detail-item"><label>Notes</label><span>${esc(l.notes || "—")}</span></div>`;
         document.getElementById("detail-modal").classList.add("open");
@@ -379,7 +382,7 @@
         document.getElementById("checkin-photo").value = "";
         document.getElementById("checkin-preview").style.display = "none";
         document.getElementById("checkin-photo-label").textContent = "Click to upload return photo";
-        document.getElementById("checkin-condition").value = "buna";
+        document.getElementById("checkin-condition").value = "good";
         document.getElementById("checkin-error").textContent = "";
         document.getElementById("checkin-modal").classList.add("open");
     }
