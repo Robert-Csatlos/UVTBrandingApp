@@ -373,6 +373,18 @@ body {
     box-shadow: 0 10px 30px rgba(217,119,6,0.16);
 }
 
+.kpi-card.alert-success {
+    background: #dcfce7;
+    border-color: #86efac;
+    box-shadow: 0 10px 30px rgba(22,163,74,0.14);
+}
+
+.kpi-card.alert-info {
+    background: #dbeafe;
+    border-color: #93c5fd;
+    box-shadow: 0 10px 30px rgba(37,99,235,0.12);
+}
+
 [data-theme="dark"] .kpi-card.alert-danger {
     background: color-mix(in srgb, var(--card-bg) 72%, #dc2626);
     border-color: #ef4444;
@@ -381,6 +393,16 @@ body {
 [data-theme="dark"] .kpi-card.alert-warning {
     background: color-mix(in srgb, var(--card-bg) 72%, #d97706);
     border-color: #f59e0b;
+}
+
+[data-theme="dark"] .kpi-card.alert-success {
+    background: color-mix(in srgb, var(--card-bg) 72%, #16a34a);
+    border-color: #22c55e;
+}
+
+[data-theme="dark"] .kpi-card.alert-info {
+    background: color-mix(in srgb, var(--card-bg) 72%, #2563eb);
+    border-color: #3b82f6;
 }
 
 .kpi-card h3 {
@@ -403,7 +425,7 @@ body {
 .kpi-card .value {
     font-size: 2.6rem;
     font-weight: 800;
-    letter-spacing: -0.04em;
+    letter-spacing: 0;
     margin-bottom: 6px;
     line-height: 1;
     color: var(--text-color);

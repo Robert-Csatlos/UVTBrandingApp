@@ -1,6 +1,6 @@
 # UVT Branding App
 
-Inventory management web app for Universitatea de Vest Timișoara. Tracks branding materials — loans, handovers, and stock.
+Inventory and loan management web app for Universitatea de Vest Timisoara branding materials. The app tracks stock, loans, returns, handovers, notifications, reports, and material condition.
 
 ---
 
@@ -10,198 +10,286 @@ Inventory management web app for Universitatea de Vest Timișoara. Tracks brandi
 - [Git](https://git-scm.com/install/windows)
 - [Visual Studio Code](https://code.visualstudio.com/download) (recommended)
 
-**Recommended VSCode extensions:** GitHub Pull Requests, Pylance, Python, Python Debugger, SQLite Viewer, SQLTools, SQLTools SQLite, HTML CSS Support, JavaScript and TypeScript Nightly
+Recommended VS Code extensions: GitHub Pull Requests, Pylance, Python, Python Debugger, SQLite Viewer, SQLTools, SQLTools SQLite, HTML CSS Support, JavaScript and TypeScript Nightly.
 
 ---
 
 ## Setup
 
 **1. Clone the repo**
-```
+
+```powershell
 git clone https://github.com/Robert-Csatlos/UVTBrandingApp
 ```
 
 **2. Configure git identity**
-```
+
+```powershell
 git config --global user.email "yourEmail@e-uvt.ro"
 git config --global user.name "Your Name"
 ```
 
 **3. Create and activate a virtual environment**
-```
+
+```powershell
 python -m venv venv
 .\venv\Scripts\activate
 ```
 
 **4. Install dependencies**
-```
+
+```powershell
 pip install -r requirements.txt
 ```
 
 **5. Start the server**
-```
+
+```powershell
 python -m uvicorn backend.api:app --reload
 ```
 
 The app runs at `http://127.0.0.1:8000`. Press `Ctrl+C` to stop.
 
-> **Note:** Sessions are stored in memory and reset on server restart. The SQLite database (`database.db`) is created automatically on first run.
+Sessions are stored in memory and reset on server restart. The SQLite database (`database.db`) is created automatically on first run.
+
+---
+
+## Demo Users
+
+Seed users are defined in `seed_users.py`.
+
+| Role | Email | Password |
+|------|-------|----------|
+| SuperAdmin | `superadmin@e-uvt.ro` | `superadmin` |
+| Admin | `admin.dept@e-uvt.ro` | `admin1234` |
+| Coordinator | `coordinator@e-uvt.ro` | `coord1234` |
+| Vizualizator | `vizualizator@e-uvt.ro` | `viz123456` |
 
 ---
 
 ## User Roles
 
-There are four roles, listed from most to least privileged:
-
 | Role | Description |
 |------|-------------|
-| **SuperAdmin** | Full access to everything, including user management |
-| **Admin** | Manages inventory and loans for their department |
-| **Coordinator** | Can view and edit inventory; can create and manage loans |
-| **Vizualizator** | Read-only access across the app |
+| SuperAdmin | Full access to everything, including user management |
+| Admin | Manages inventory, loans, reports, and operational notifications |
+| Coordinator | Can view/edit inventory and manage loans/handovers |
+| Vizualizator | Read-only access where allowed |
 
 ---
 
-## What Each Role Can Do
-
-### Inventory Management (`/inventory`)
-
-| Action | SuperAdmin | Admin | Coordinator | Vizualizator |
-|--------|:---------:|:-----:|:-----------:|:------------:|
-| View all items | ✅ | ✅ | ✅ | ✅ |
-| Add new item | ✅ | ✅ | — | — |
-| Edit item | ✅ | ✅ | ✅ | — |
-| Delete item | ✅ | ✅ | — | — |
-
-### User Management (`/admin`)
-
-| Action | SuperAdmin | Admin | Coordinator | Vizualizator |
-|--------|:---------:|:-----:|:-----------:|:------------:|
-| View users | ✅ | — | — | — |
-| Create user | ✅ | — | — | — |
-| Edit user | ✅ | — | — | — |
-| Delete user | ✅ | — | — | — |
-
-### Dashboard (`/home`)
-
-All roles can view the dashboard.
-
----
-
-## Pages — Current Status
+## Pages
 
 | Page | Route | Status | Notes |
 |------|-------|--------|-------|
-| Login | `/` | ✅ Done | Redirects all roles to `/home` after login |
-| Dashboard | `/home` | ✅ Done | 6 KPI cards loaded from `/stats`, 3×2 grid layout |
-| Inventory | `/inventory` | ✅ Done | Full CRUD, role-gated, search + status + category filter |
-| User Management | `/admin` | ✅ Done | SuperAdmin only — full CRUD for users |
-| Loans | `/loans` | ❌ Stub | Model + API POST exist; UI not built |
-| Handover | `/handover` | ❌ Stub | Model exists; UI not built |
-| Reports | `/reports` | ❌ Stub | Not started |
-| Notifications | `/notifications` | ❌ Stub | Not started |
+| Login | `/` | Done | Professional landing/login flow with light/dark theme switch |
+| Dashboard | `/home` | Done | KPI cards from `/stats` with semantic colors: red for overdue/low stock, yellow for attention, green for healthy stock, blue for totals |
+| Inventory | `/inventory` | Done | CRUD, search, category/status filters, loan checkout, and condition variants |
+| Loans | `/loans` | Done | Active/returned/overdue list, return flow with photo, deterioration flag, and manual reminder |
+| Handover | `/handover` | Done | Create handovers, receiver confirmation, condition before/after, photos, and signature capture |
+| Reports | `/reports` | Done | KPI summary, timeline, category/top item/user activity views, overdue list, inventory status, CSV export |
+| Notifications | `/notifications` | Done | Notification inbox, unread badge, filters, mark-read, clear, and sidebar badge |
+| User Management | `/admin` | Done | SuperAdmin-only CRUD for users |
 
 ---
 
-## Full Feature Checklist (from spec)
+## Current UX Notes
 
-### Module A — Inventory Management
-- [x] Fields: name, category, inventory code, quantity, condition (new/good/worn), location, responsible person
-- [x] List with search bar and filters (category, status)
+- The Romanian language switch was removed from all pages.
+- The app keeps only the light/dark mode switch.
+- The notification badge appears only on the Notifications sidebar item, not on Loans.
+- The notification badge is global and can appear from any page that has the sidebar notification box.
+- Dashboard and Reports use logical KPI colors:
+  - Red: overdue, deteriorated, low stock, or other urgent/problem states.
+  - Yellow: active loans and due-soon attention states.
+  - Green: available/returned/healthy states.
+  - Blue: neutral totals and general activity.
+
+---
+
+## Inventory Condition Variants
+
+Inventory items are separated by condition so a returned damaged item does not turn the full stock into damaged stock.
+
+Condition codes:
+
+| Condition | Code suffix | Example |
+|-----------|-------------|---------|
+| New | `-N` | `BAN-001-N` |
+| Good | `-G` | `BAN-001-G` |
+| Worn / Damaged | `-W` | `BAN-001-W` |
+
+The inventory UI includes a Variants popup that groups items by base code and shows stock per condition. Checkout uses the selected item's condition. Return flows can place stock back into the correct condition variant.
+
+---
+
+## Feature Checklist
+
+### Inventory Management
+
+- [x] Fields: name, category, inventory code, quantity, condition, location, responsible person
+- [x] Search and filters by category/status
+- [x] Role-gated create/edit/delete behavior
+- [x] Condition-specific variants using `-N`, `-G`, and `-W` suffixes
+- [x] Variants popup per item/base code
 - [ ] Filter by location
 - [ ] Sortable table columns
-- [ ] Photo upload per material (JPG/PNG)
+- [ ] Photo upload per material
 - [ ] QR code auto-generation
-- [ ] Export to Excel / PDF (all items and per item)
-- [ ] Print QR code labels for physical tagging
+- [ ] Export to Excel/PDF
+- [ ] Print QR code labels
 
-### Module B — Loan Tracking (Check-Out / Check-In)
-- [x] Loan DB model (material, quantity, borrower, reason, event date, deadline, condition, photos, accessories, deterioration flag, status)
-- [x] Basic `POST /loans/` API endpoint
-- [ ] Loan checkout UI (select material + quantity, borrower, reason, auto-deadline = event date + 2 days)
-- [ ] Mandatory checkout photo (proof of condition)
-- [ ] Loan return (check-in) UI with mandatory photo
-- [ ] Side-by-side photo comparison (checkout vs check-in)
-- [ ] Auto flag deterioration if condition changed; notify admin
-- [ ] Active loans dashboard (days remaining with green/orange/red colors, quick "Return" button)
-- [ ] Email: loan confirmation, 1-day-before reminder, overdue alert
+### Loan Tracking
 
-### Module C — Handover (Between People / Departments)
-- [x] Handover DB model (material, quantity, sender → receiver, condition before/after, photos, signatures, PDF path, status)
-- [ ] Handover form UI (what, from whom, to whom, condition, photo)
-- [ ] Receiver confirmation UI (verify quantity + condition, report differences)
-- [ ] Digital signature capture
-- [ ] Auto-generate "Proces Verbal" PDF with both signatures
-- [ ] Full custody history (who had what and when)
-- [ ] Status tracking: pending / completed
-- [ ] Notification to admin/coordinator on handover events
+- [x] Loan database model and API
+- [x] Checkout UI from Inventory
+- [x] Mandatory checkout photo
+- [x] Auto deadline support from event date
+- [x] Loan dashboard with search/status filters
+- [x] Return/check-in UI with mandatory photo
+- [x] Condition on return
+- [x] Deterioration flag
+- [x] Manual reminder notification
+- [ ] Side-by-side photo comparison layout
+- [ ] Email delivery for confirmation/reminders/overdue alerts
+
+### Handover
+
+- [x] Handover database model and API
+- [x] Handover form UI
+- [x] Receiver confirmation UI
+- [x] Condition before/after tracking
+- [x] Photo support
+- [x] Digital signature capture
+- [x] Status tracking: pending/completed
+- [ ] Auto-generated "Proces Verbal" PDF
+- [ ] Full custody history view
+- [ ] Email notifications for handover events
 
 ### Reporting & Dashboard
-- [ ] Monthly report: item count, top 5 most borrowed, return rate, deteriorations — export PDF
-- [ ] Weekly report: active loans, this week's deadlines, overdue items, pending handovers — email + PDF
-- [ ] Dashboard graphs: stock evolution, top 10 items, category distribution, rankings table
 
-### Notification System
-- [ ] Reminder 1 day before loan deadline
-- [ ] Overdue alert when deadline is passed
-- [ ] Monday morning digest of all active loans
-- [ ] Low stock alert when quantity < 20
-- [ ] Handover confirmation email to receiver
+- [x] Dashboard KPI cards
+- [x] Semantic color states for KPI cards
+- [x] Reports summary cards
+- [x] Loan timeline
+- [x] Category distribution
+- [x] Top borrowed items
+- [x] User activity
+- [x] Overdue list
+- [x] Inventory status summary
+- [x] CSV export
+- [ ] Scheduled monthly/weekly PDF reports
+- [ ] Email digest delivery
+
+### Notifications
+
+- [x] In-app notification model and API
+- [x] Sidebar unread notification badge
+- [x] Notification inbox page
+- [x] Due-soon notifications
+- [x] Overdue notifications
+- [x] Low stock notifications
+- [x] Return and deterioration notifications
+- [x] Mark one/all as read
+- [x] Clear notifications
+- [ ] Email/SMS notification delivery
+- [ ] Monday morning digest
 
 ### Roles & Access Control
-- [x] SuperAdmin — full access (inventory CRUD, user management, all pages)
-- [x] Admin — inventory CRUD (create, edit, delete), manage loans
-- [x] Coordinator — can edit inventory (not create/delete), can borrow
-- [x] Vizualizator — read-only everywhere
+
+- [x] SuperAdmin: full access
+- [x] Admin: inventory CRUD, loans, reports, notifications
+- [x] Coordinator: inventory edit, loans, handovers, notifications
+- [x] Vizualizator: read-only access where allowed
 
 ---
 
 ## API Overview
 
-### Auth
+### Auth and Dashboard
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| POST | `/login/` | None | Login — sets session cookie |
-| POST | `/logout/` | Any | Clears session |
-| GET | `/me` | Any | Returns current user info |
-| GET | `/stats` | Any | Dashboard KPI numbers |
+| POST | `/login/` | Public | Login and set session cookie |
+| POST | `/logout/` | Any role | Clear session |
+| GET | `/me` | Any role | Current user |
+| GET | `/stats` | Any role | Dashboard KPI numbers |
 
 ### Inventory
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/inventory/` | Any role | List all items |
+| GET | `/inventory/` | Any role | List inventory items |
 | POST | `/inventory/` | Admin+ | Create item |
-| GET | `/inventory/{id}` | Any role | Get single item |
+| GET | `/inventory/{id}` | Any role | Get one item |
 | PUT | `/inventory/{id}` | Coordinator+ | Update item |
 | DELETE | `/inventory/{id}` | Admin+ | Delete item |
 
-### User Management
+### Loans
+
 | Method | Path | Auth | Description |
 |--------|------|------|-------------|
-| GET | `/admin/users/` | SuperAdmin | List all users |
+| GET | `/loans/` | Any role | List loans |
+| POST | `/loans/` | Coordinator+ | Create loan |
+| POST | `/loans/{id}/return` | Admin+ | Return/check in loan |
+| POST | `/loans/{id}/deteriorated` | Admin+ | Flag loan as deteriorated |
+| POST | `/loans/{id}/notify` | Admin+ | Send manual reminder notification |
+
+### Handovers
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/handovers/` | Any role | List handovers |
+| POST | `/handovers/` | Any role | Create handover |
+| POST | `/handovers/{id}/confirm` | Any role | Confirm handover |
+
+### Notifications
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/notifications/` | Any role | List notifications |
+| GET | `/notifications/unread-count` | Any role | Sidebar unread count |
+| POST | `/notifications/mark-read` | Any role | Mark one notification as read |
+| POST | `/notifications/mark-all-read` | Any role | Mark all notifications as read |
+| DELETE | `/notifications/{id}` | Any role | Delete one notification |
+| DELETE | `/notifications/` | Any role | Delete all notifications |
+
+### Reports
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/reports/summary` | Admin+ | Report KPI summary |
+| GET | `/reports/by-category` | Admin+ | Loans grouped by category |
+| GET | `/reports/top-items` | Admin+ | Most borrowed items |
+| GET | `/reports/loan-timeline` | Admin+ | Loan activity timeline |
+| GET | `/reports/overdue-list` | Admin+ | Currently overdue loans |
+| GET | `/reports/inventory-status` | Admin+ | Inventory status totals |
+| GET | `/reports/user-activity` | Admin+ | User activity rankings |
+
+### User Management
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/admin/users/` | SuperAdmin | List users |
 | POST | `/admin/users/` | SuperAdmin | Create user |
 | GET | `/admin/users/{id}` | SuperAdmin | Get user |
 | PUT | `/admin/users/{id}` | SuperAdmin | Update user |
-| DELETE | `/admin/users/{id}` | SuperAdmin | Delete user (cannot self-delete) |
-
----
-
-## Project Timeline (from spec)
-
-| Phase | Weeks | Status |
-|-------|-------|--------|
-| 1. Analysis & design | 1–2 | ✅ DB schema, wireframes done |
-| 2. Functional prototype | 3–5 | ✅ Inventory + auth + search done |
-| 3. Advanced features | 6–8 | 🔄 Loans / handover / notifications — in progress |
-| 4. Reporting & dashboard | 9–10 | ❌ Not started |
-| 5. Testing & finalization | 11–12 | ❌ Not started |
-| 6. Deployment | 13 | ❌ Not started |
+| DELETE | `/admin/users/{id}` | SuperAdmin | Delete user |
 
 ---
 
 ## Tech Stack
 
-- **Backend:** FastAPI + SQLAlchemy (ORM) + SQLite + bcrypt
-- **Sessions:** In-memory cookie-based sessions (`session_token` httponly cookie)
-- **Frontend:** Vanilla HTML/CSS/JS — no framework, served as static files by FastAPI
-- **Theme:** Light/dark via CSS `data-theme` attribute (localStorage key `theme`)
+- Backend: FastAPI, SQLAlchemy, SQLite, bcrypt
+- Sessions: in-memory session tokens with HTTP-only cookie
+- Frontend: vanilla HTML, CSS, and JavaScript served by FastAPI
+- Theme: light/dark mode using the `data-theme` attribute and localStorage key `theme`
+
+---
+
+## Notes For Future Work
+
+- Add proper automated tests for API behavior and role permissions.
+- Consider moving repeated sidebar/theme code into reusable templates if the app grows.
+- Add PDF generation for handovers and scheduled reports.
+- Add real email delivery for reminders, overdue alerts, and digests.

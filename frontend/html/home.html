@@ -105,17 +105,17 @@
             </header>
 
             <div class="dashboard-grid">
-                <div class="kpi-card">
+                <div class="kpi-card" id="card-total">
                     <h3><span class="kpi-icon">📦</span><span>Total materials</span></h3>
                     <div class="value" id="stat-total">—</div>
                     <p>units in inventory</p>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card" id="card-available">
                     <h3><span class="kpi-icon">✅</span><span>Available</span></h3>
                     <div class="value text-success" id="stat-available">—</div>
                     <p>ready for loan</p>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card" id="card-borrowed">
                     <h3><span class="kpi-icon">↔️</span><span>Borrowed</span></h3>
                     <div class="value text-warning" id="stat-borrowed">—</div>
                     <p>active loans right now</p>
@@ -130,7 +130,7 @@
                     <div class="value text-warning" id="stat-pending">—</div>
                     <p>due within 3 days</p>
                 </div>
-                <div class="kpi-card">
+                <div class="kpi-card" id="card-low">
                     <h3><span class="kpi-icon">📉</span><span>Low stock</span></h3>
                     <div class="value text-danger" id="stat-low">—</div>
                     <p>items below 20 units</p>
@@ -166,15 +166,20 @@
                 document.getElementById("stat-pending").textContent   = s.pending;
                 document.getElementById("stat-low").textContent       = s.low_stock;
 
-                setKpiAlert("card-overdue", s.overdue > 0, "alert-danger");
-                setKpiAlert("card-pending", s.pending > 0, "alert-warning");
+                setKpiState("card-total", "alert-info", s.total > 0);
+                setKpiState("card-available", "alert-success", s.available > 0);
+                setKpiState("card-borrowed", "alert-warning", s.borrowed > 0);
+                setKpiState("card-overdue", "alert-danger", s.overdue > 0);
+                setKpiState("card-pending", "alert-warning", s.pending > 0);
+                setKpiState("card-low", "alert-danger", s.low_stock > 0);
             } catch (_) {}
         }
 
-        function setKpiAlert(cardId, isActive, className) {
+        function setKpiState(cardId, className, isActive) {
             const card = document.getElementById(cardId);
             if (!card) return;
-            card.classList.toggle(className, isActive);
+            card.classList.remove("alert-success", "alert-warning", "alert-danger", "alert-info");
+            if (isActive) card.classList.add(className);
         }
 
         function applySidebar(user) {
