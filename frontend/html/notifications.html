@@ -60,6 +60,7 @@
         .notif-card.type-deteriorated { border-left-color: #9333ea; }
         .notif-card.type-low_stock    { border-left-color: #f97316; }
         .notif-card.type-manual       { border-left-color: #0057a8; }
+        .notif-card.type-weekly_digest{ border-left-color: #0f766e; }
 
         .notif-icon {
             font-size: 20px; flex-shrink: 0;
@@ -153,6 +154,7 @@
             <button class="filter-btn"        data-filter="returned"    onclick="setFilter('returned', this)">✅ Returned</button>
             <button class="filter-btn"        data-filter="deteriorated" onclick="setFilter('deteriorated', this)">⚠️ Deteriorated</button>
             <button class="filter-btn"        data-filter="low_stock"   onclick="setFilter('low_stock', this)">📉 Low Stock</button>
+            <button class="filter-btn"        data-filter="weekly_digest" onclick="setFilter('weekly_digest', this)">Weekly Digest</button>
             <button class="filter-btn"        data-filter="manual"      onclick="setFilter('manual', this)">📨 Messages</button>
 
             <div class="toolbar-right">
@@ -246,6 +248,7 @@
         returned:     "✅",
         deteriorated: "⚠️",
         low_stock:    "📉",
+        weekly_digest:"W",
         manual:       "📨",
     };
 

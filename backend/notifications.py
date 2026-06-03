@@ -15,9 +15,10 @@ Automatic notifications are fired from crud.py whenever:
 Manual notifications are sent by Admins/SuperAdmins via POST /loans/{id}/notify
 and go to the borrower of that loan.
 
-A background scheduler (APScheduler) runs every hour and:
-  - Creates "due_soon" notifications for loans due within 3 days (once per loan)
+A background scheduler runs every hour and:
+  - Creates "due_soon" notifications about 1 day before the deadline (once per loan)
   - Creates "overdue" notifications for newly overdue loans (once per loan)
+  - Creates a Monday morning active-loans digest for operators
 """
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -29,6 +30,7 @@ from . import models
 from .database import get_db
 from .auth import get_current_user, require_admin_or_above
 import datetime
+from zoneinfo import ZoneInfo
 
 router = APIRouter(prefix="/notifications", tags=["notifications"])
 
@@ -219,13 +221,14 @@ def run_scheduled_checks(db: Session):
     already created. Uses the notification type + loan_id to deduplicate.
     """
     now = datetime.datetime.now(datetime.timezone.utc)
-    soon = now + datetime.timedelta(days=3)
+    reminder_start = now + datetime.timedelta(hours=23)
+    reminder_end = now + datetime.timedelta(hours=25)
 
     # ── Due-soon (active loans with deadline within 3 days) ──
     due_soon_loans = db.query(models.Loan).filter(
         models.Loan.status == "active",
-        models.Loan.deadline_date >= now,
-        models.Loan.deadline_date <= soon,
+        models.Loan.deadline_date >= reminder_start,
+        models.Loan.deadline_date <= reminder_end,
     ).all()
 
     for loan in due_soon_loans:
@@ -240,14 +243,12 @@ def run_scheduled_checks(db: Session):
 
         item = db.query(models.Inventory).filter(models.Inventory.id == loan.inventory_id).first()
         item_name = item.name if item else f"Item #{loan.inventory_id}"
-        days_left = max(0, (loan.deadline_date.replace(tzinfo=datetime.timezone.utc) - now).days)
-
         create_notification(
             db,
             recipient_id=loan.user_id,
             type="due_soon",
-            title="⏰ Return Due Soon",
-            message=f'"{item_name}" (×{loan.quantity}) is due back in {days_left} day{"s" if days_left != 1 else ""}. Please return it on time.',
+            title="Return Due Tomorrow",
+            message=f'"{item_name}" (x{loan.quantity}) is due back tomorrow. Please return it on time.',
             loan_id=loan.id,
             inventory_id=loan.inventory_id,
         )
@@ -297,10 +298,56 @@ def run_scheduled_checks(db: Session):
                     db,
                     recipient_id=admin.id,
                     type="overdue",
-                    title="🚨 Overdue Loan",
-                    message=f'{borrower_name} has not returned "{item_name}" (×{loan.quantity}). Overdue by {days_late} day{"s" if days_late != 1 else ""}.',
+                    title="Overdue Loan",
+                    message=f'{borrower_name} has not returned "{item_name}" (x{loan.quantity}). Overdue by {days_late} day{"s" if days_late != 1 else ""}.',
                     loan_id=loan.id,
                     inventory_id=loan.inventory_id,
+                )
+
+    local_now = now.astimezone(ZoneInfo("Europe/Bucharest"))
+    if local_now.weekday() == 0 and 8 <= local_now.hour < 10:
+        local_day_start = datetime.datetime.combine(local_now.date(), datetime.time.min)
+        active_rows = (
+            db.query(
+                models.Loan,
+                models.Inventory.name,
+                models.Inventory.inventory_code,
+                models.User.full_name,
+                models.User.email,
+            )
+            .join(models.Inventory, models.Loan.inventory_id == models.Inventory.id)
+            .join(models.User, models.Loan.user_id == models.User.id)
+            .filter(models.Loan.status == "active")
+            .order_by(models.Loan.deadline_date.asc())
+            .all()
+        )
+
+        if active_rows:
+            lines = []
+            for loan, item_name, code, borrower_name, borrower_email in active_rows[:8]:
+                borrower = borrower_name or borrower_email
+                due = loan.deadline_date.strftime("%d %b %Y") if loan.deadline_date else "no deadline"
+                lines.append(f"- {item_name} ({code}) x{loan.quantity}, {borrower}, due {due}")
+            if len(active_rows) > 8:
+                lines.append(f"- plus {len(active_rows) - 8} more active loan(s)")
+
+            operators = db.query(models.User).filter(
+                models.User.role.in_(["SuperAdmin", "Admin", "Coordinator"])
+            ).all()
+            for user in operators:
+                already_digest = db.query(models.Notification).filter(
+                    models.Notification.recipient_id == user.id,
+                    models.Notification.type == "weekly_digest",
+                    models.Notification.created_at >= local_day_start,
+                ).first()
+                if already_digest:
+                    continue
+                create_notification(
+                    db,
+                    recipient_id=user.id,
+                    type="weekly_digest",
+                    title="Monday Active Loans Digest",
+                    message="Active loans this week:\n" + "\n".join(lines),
                 )
 
     db.commit()

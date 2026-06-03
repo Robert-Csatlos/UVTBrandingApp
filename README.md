@@ -129,15 +129,17 @@ The inventory UI includes a Variants popup that groups items by base code and sh
 
 - [x] Fields: name, category, inventory code, quantity, condition, location, responsible person
 - [x] Search and filters by category/status
+- [x] Filter by location
+- [x] Quantity range filters
 - [x] Role-gated create/edit/delete behavior
 - [x] Condition-specific variants using `-N`, `-G`, and `-W` suffixes
 - [x] Variants popup per item/base code
-- [ ] Filter by location
+- [x] QR code auto-generation
+- [x] Print QR code labels
 - [ ] Sortable table columns
 - [ ] Photo upload per material
-- [ ] QR code auto-generation
 - [ ] Export to Excel/PDF
-- [ ] Print QR code labels
+- [ ] Material value field and value filters
 
 ### Loan Tracking
 
@@ -187,13 +189,14 @@ The inventory UI includes a Variants popup that groups items by base code and sh
 - [x] Sidebar unread notification badge
 - [x] Notification inbox page
 - [x] Due-soon notifications
+- [x] 1-day-before return reminder
 - [x] Overdue notifications
 - [x] Low stock notifications
 - [x] Return and deterioration notifications
 - [x] Mark one/all as read
 - [x] Clear notifications
+- [x] Monday morning active-loans digest
 - [ ] Email/SMS notification delivery
-- [ ] Monday morning digest
 
 ### Roles & Access Control
 

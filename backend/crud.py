@@ -4,6 +4,8 @@ from fastapi import HTTPException
 from . import models, schemas
 from .auth import get_password_hash
 import datetime
+import re
+from pathlib import Path
 
 
 # --- Inventory ---
@@ -34,6 +36,8 @@ CONDITION_ALIASES = {
     "uzata": "worn",
     "uzată": "worn",
 }
+
+QR_IMAGE_DIR = Path("images/qrcodes")
 
 
 def normalize_condition(condition) -> str:
@@ -79,11 +83,65 @@ def get_or_create_condition_variant(db: Session, source_item: models.Inventory, 
         location=source_item.location,
         responsible_person=source_item.responsible_person,
         photo_path=source_item.photo_path,
-        qr_code_path="pending.png",
+        qr_code_path=None,
     )
     db.add(variant)
     db.flush()
+    generate_inventory_qr_code(variant)
     return variant
+
+
+def _safe_qr_filename(inventory_code: str) -> str:
+    safe = re.sub(r"[^A-Z0-9_-]+", "-", str(inventory_code or "").upper()).strip("-")
+    return safe or "ITEM"
+
+
+def generate_inventory_qr_code(item: models.Inventory) -> str | None:
+    """
+    Generate a QR image for an inventory item and store the web path on the model.
+    The qrcode dependency is optional at runtime so the app can still boot before
+    dependencies are installed.
+    """
+    try:
+        import qrcode
+    except ImportError:
+        return item.qr_code_path
+
+    QR_IMAGE_DIR.mkdir(parents=True, exist_ok=True)
+    filename = f"{item.id}-{_safe_qr_filename(item.inventory_code)}.png"
+    output_path = QR_IMAGE_DIR / filename
+    payload = "\n".join([
+        "UVT Branding App",
+        f"Code: {item.inventory_code}",
+        f"Name: {item.name}",
+        f"Condition: {item.status}",
+        f"Location: {item.location}",
+    ])
+
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_M,
+        box_size=8,
+        border=2,
+    )
+    qr.add_data(payload)
+    qr.make(fit=True)
+    image = qr.make_image(fill_color="black", back_color="white")
+    image.save(output_path)
+    item.qr_code_path = f"/images/qrcodes/{filename}"
+    return item.qr_code_path
+
+
+def ensure_inventory_qr_codes(db: Session):
+    changed = False
+    for item in db.query(models.Inventory).all():
+        if item.qr_code_path and item.qr_code_path != "pending.png":
+            continue
+        before = item.qr_code_path
+        generate_inventory_qr_code(item)
+        changed = changed or item.qr_code_path != before
+    if changed:
+        db.commit()
 
 
 def migrate_inventory_variant_codes(db: Session):
@@ -100,6 +158,7 @@ def migrate_inventory_variant_codes(db: Session):
         if existing:
             continue
         item.inventory_code = target_code
+        generate_inventory_qr_code(item)
         changed = True
     if changed:
         db.commit()
@@ -120,12 +179,15 @@ def create_inventory(db: Session, item: schemas.InventoryCreate):
         existing.status = data["status"]
         existing.location = data["location"]
         existing.responsible_person = data["responsible_person"]
+        generate_inventory_qr_code(existing)
         db.commit()
         db.refresh(existing)
         return existing
 
-    db_item = models.Inventory(**data, photo_path="pending.jpg", qr_code_path="pending.png")
+    db_item = models.Inventory(**data, photo_path="pending.jpg", qr_code_path=None)
     db.add(db_item)
+    db.flush()
+    generate_inventory_qr_code(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
@@ -159,6 +221,7 @@ def update_inventory(db: Session, item_id: int, update: schemas.InventoryUpdate)
 
     for field, value in data.items():
         setattr(item, field, value if not hasattr(value, "value") else value.value)
+    generate_inventory_qr_code(item)
     db.commit()
     db.refresh(item)
     return item

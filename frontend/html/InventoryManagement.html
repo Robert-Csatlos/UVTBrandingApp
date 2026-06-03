@@ -21,6 +21,11 @@
             font-family:inherit; transition:border-color 0.2s;
         }
         .filter-select:focus { outline:none; border-color:#0057a8; }
+        .qty-filter {
+            width:92px; padding:10px 12px; border:1.5px solid var(--border,#e2e8f0); border-radius:10px;
+            font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#0f172a); font-family:inherit;
+        }
+        .qty-filter:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
 
         /* ── Buttons ── */
         .btn {
@@ -36,6 +41,7 @@
         .btn-edit    { background:#2563eb; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(37,99,235,0.2); }
         .btn-loan    { background:linear-gradient(135deg,#0057a8,#0072d6); color:#fff; padding:6px 12px; font-size:12.5px; }
         .btn-view    { background:var(--hover-bg,#f8fafc); color:var(--text-color,#0f172a); border:1px solid var(--border,#e2e8f0); padding:6px 12px; font-size:12.5px; }
+        .btn-label   { background:#0f766e; color:#fff; padding:6px 12px; font-size:12.5px; }
 
         /* ── Table ── */
         .inv-table {
@@ -146,6 +152,7 @@
 
         @media (max-width:640px) {
             .form-row { grid-template-columns:1fr; }
+            .qty-filter { width:100%; }
             .inv-table th:nth-child(6), .inv-table td:nth-child(6),
             .inv-table th:nth-child(7), .inv-table td:nth-child(7) { display:none; }
         }
@@ -232,6 +239,12 @@
             <select id="filter-category" class="filter-select" onchange="filterTable()">
                 <option value="">All Categories</option>
             </select>
+            <select id="filter-location" class="filter-select" onchange="filterTable()">
+                <option value="">All Locations</option>
+            </select>
+            <input type="number" id="filter-min-qty" class="qty-filter" min="0" placeholder="Min qty" oninput="filterTable()">
+            <input type="number" id="filter-max-qty" class="qty-filter" min="0" placeholder="Max qty" oninput="filterTable()">
+            <button class="btn btn-cancel" onclick="clearFilters()">Clear</button>
             <button id="add-btn" class="btn btn-primary" onclick="openAddModal()" style="display:none">
                 + Add Item
             </button>
@@ -466,6 +479,7 @@
             if (res.status === 401) { window.location.href = "/"; return; }
             allItems = await res.json();
             populateCategoryFilter();
+            populateLocationFilter();
             filterTable();
         } catch (_) {
             document.getElementById("inv-tbody").innerHTML =
@@ -486,16 +500,49 @@
         });
     }
 
+    function populateLocationFilter() {
+        const select = document.getElementById("filter-location");
+        const current = select.value;
+        const locations = [...new Set(allItems.map(i => i.location).filter(Boolean))].sort();
+        select.innerHTML = `<option value="">All Locations</option>`;
+        locations.forEach(location => {
+            const opt = document.createElement("option");
+            opt.value = location; opt.textContent = location;
+            if (location === current) opt.selected = true;
+            select.appendChild(opt);
+        });
+    }
+
+    function clearFilters() {
+        document.getElementById("search-input").value = "";
+        document.getElementById("filter-status").value = "";
+        document.getElementById("filter-category").value = "";
+        document.getElementById("filter-location").value = "";
+        document.getElementById("filter-min-qty").value = "";
+        document.getElementById("filter-max-qty").value = "";
+        filterTable();
+    }
+
     function filterTable() {
         const q = document.getElementById("search-input").value.toLowerCase();
         const sf = document.getElementById("filter-status").value;
         const cf = document.getElementById("filter-category").value;
+        const lf = document.getElementById("filter-location").value;
+        const minQtyRaw = document.getElementById("filter-min-qty").value;
+        const maxQtyRaw = document.getElementById("filter-max-qty").value;
+        const minQty = minQtyRaw === "" ? null : Number(minQtyRaw);
+        const maxQty = maxQtyRaw === "" ? null : Number(maxQtyRaw);
         const filtered = allItems.filter(item =>
             (!q || item.name.toLowerCase().includes(q) ||
                    item.inventory_code.toLowerCase().includes(q) ||
-                   item.category.toLowerCase().includes(q)) &&
+                   item.category.toLowerCase().includes(q) ||
+                   item.location.toLowerCase().includes(q) ||
+                   item.responsible_person.toLowerCase().includes(q)) &&
             (!sf || item.status === sf) &&
-            (!cf || item.category === cf)
+            (!cf || item.category === cf) &&
+            (!lf || item.location === lf) &&
+            (minQty === null || Number(item.quantity || 0) >= minQty) &&
+            (maxQty === null || Number(item.quantity || 0) <= maxQty)
         );
         renderTable(filtered);
     }
@@ -526,6 +573,7 @@
                 <td>${esc(item.location)}</td>
                 <td>${esc(item.responsible_person)}</td>
                 <td style="white-space:nowrap;">
+                    <button class="btn btn-label" onclick="printItemLabel(${item.id})">Label</button>
                     <button class="btn btn-view" onclick="openVariantsModal(${item.id})">Variants</button>
                     ${canEdit   ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>` : ""}
                     ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">Delete</button>` : ""}
@@ -628,7 +676,7 @@
             `<strong>${esc(baseCode)}</strong><span>Total quantity: ${total}</span>`;
         document.getElementById("variants-content").innerHTML = `
             <table class="variant-table">
-                <thead><tr><th>Variant Code</th><th>Condition</th><th>Qty</th><th>Location</th></tr></thead>
+                <thead><tr><th>Variant Code</th><th>Condition</th><th>Qty</th><th>Location</th><th>Label</th></tr></thead>
                 <tbody>
                     ${variants.map(v => `
                         <tr>
@@ -636,6 +684,7 @@
                             <td><span class="status-badge status-${v.status}">${conditionLabel(v.status)}</span></td>
                             <td>${v.quantity}</td>
                             <td>${esc(v.location)}</td>
+                            <td><button class="btn btn-label" onclick="printItemLabel(${v.id})">Print</button></td>
                         </tr>
                     `).join("")}
                 </tbody>
@@ -645,6 +694,71 @@
 
     function closeVariantsModal() {
         document.getElementById("variants-modal").classList.remove("open");
+    }
+
+    async function ensureItemQr(item) {
+        if (item.qr_code_path && item.qr_code_path !== "pending.png") return item;
+        const res = await fetch(`/inventory/${item.id}/qr`, { method: "POST" });
+        const data = await res.json();
+        if (!res.ok) throw new Error(data.detail || "Could not generate QR code.");
+        const idx = allItems.findIndex(i => i.id === item.id);
+        if (idx >= 0) allItems[idx] = data;
+        return data;
+    }
+
+    async function printItemLabel(id) {
+        try {
+            let item = allItems.find(i => i.id === id);
+            if (!item) return;
+            item = await ensureItemQr(item);
+            const qrSrc = item.qr_code_path ? `${window.location.origin}${item.qr_code_path}` : "";
+            const printWindow = window.open("", "_blank", "width=460,height=640");
+            if (!printWindow) { showToast("Allow popups to print labels."); return; }
+
+            printWindow.document.write(`
+                <!DOCTYPE html>
+                <html lang="en">
+                <head>
+                    <meta charset="UTF-8">
+                    <title>${esc(item.inventory_code)} Label</title>
+                    <style>
+                        @page { size: 90mm 55mm; margin: 5mm; }
+                        body { margin:0; font-family:Arial, sans-serif; color:#0f172a; }
+                        .label { width:80mm; min-height:45mm; border:1px solid #cbd5e1; border-radius:8px; padding:8px; box-sizing:border-box; display:flex; gap:10px; align-items:center; }
+                        .qr { width:30mm; height:30mm; object-fit:contain; flex-shrink:0; }
+                        .fallback { width:30mm; height:30mm; border:1px dashed #94a3b8; display:flex; align-items:center; justify-content:center; font-size:9px; color:#64748b; text-align:center; }
+                        .meta { min-width:0; }
+                        .eyebrow { font-size:8px; font-weight:700; letter-spacing:1px; color:#0057a8; text-transform:uppercase; margin-bottom:3px; }
+                        h1 { font-size:15px; line-height:1.15; margin:0 0 4px; }
+                        .code { font-size:13px; font-weight:800; background:#e0f2fe; color:#075985; padding:2px 5px; border-radius:4px; display:inline-block; margin-bottom:4px; }
+                        .line { font-size:10px; line-height:1.35; color:#334155; }
+                        .condition { font-weight:700; }
+                        @media print { .no-print { display:none; } }
+                    </style>
+                </head>
+                <body>
+                    <div class="label">
+                        ${qrSrc ? `<img class="qr" src="${qrSrc}" alt="QR code">` : `<div class="fallback">QR unavailable</div>`}
+                        <div class="meta">
+                            <div class="eyebrow">UVT Branding</div>
+                            <h1>${esc(item.name)}</h1>
+                            <div class="code">${esc(item.inventory_code)}</div>
+                            <div class="line condition">${esc(conditionLabel(item.status))} · Qty ${Number(item.quantity || 0)}</div>
+                            <div class="line">${esc(item.category)}</div>
+                            <div class="line">${esc(item.location)}</div>
+                            <div class="line">${esc(item.responsible_person)}</div>
+                        </div>
+                    </div>
+                    <button class="no-print" onclick="window.print()" style="margin-top:12px;padding:8px 12px;">Print label</button>
+                </body>
+                </html>
+            `);
+            printWindow.document.close();
+            printWindow.focus();
+            setTimeout(() => printWindow.print(), 250);
+        } catch (err) {
+            showToast(err.message || "Could not print label.");
+        }
     }
 
     function openLoanModal(id) {

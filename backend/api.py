@@ -21,6 +21,7 @@ from .reports import router as reports_router
 models.Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
     crud.migrate_inventory_variant_codes(db)
+    crud.ensure_inventory_qr_codes(db)
 
 app = FastAPI(title="UVT Branding App API")
 
@@ -172,6 +173,24 @@ def get_item(
     item = crud.get_inventory_by_id(db, item_id)
     if not item:
         raise HTTPException(status_code=404, detail="Item not found")
+    return item
+
+
+@app.post("/inventory/{item_id}/qr", response_model=schemas.Inventory)
+def regenerate_item_qr(
+    item_id: int,
+    db: Session = Depends(get_db),
+    _: models.User = Depends(get_current_user),
+):
+    item = crud.get_inventory_by_id(db, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+    before = item.qr_code_path
+    path = crud.generate_inventory_qr_code(item)
+    if not path or path == before == "pending.png":
+        raise HTTPException(status_code=503, detail="QR generation requires qrcode[pil]. Run pip install -r requirements.txt.")
+    db.commit()
+    db.refresh(item)
     return item
 
 
