@@ -633,7 +633,7 @@
                     <button class="btn btn-view" onclick="openVariantsModal(${item.id})">Variants</button>
                     ${canManageItem(item) ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>` : ""}
                     ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">Delete</button>` : ""}
-                    ${canLoan   ? `<button class="btn btn-loan"   onclick="openLoanModal(${item.id})">📦 Loan</button>` : ""}
+                    ${canLoanItem(item) ? `<button class="btn btn-loan"   onclick="openLoanModal(${item.id})">📦 Loan</button>` : ""}
                 </td>
             </tr>
         `).join("");
@@ -645,6 +645,12 @@
         const owner = String(item.responsible_person || "").trim().toLowerCase();
         return owner === String(currentUserName || "").trim().toLowerCase()
             || owner === String(currentUserEmail || "").trim().toLowerCase();
+    }
+
+    function canLoanItem(item) {
+        if (["SuperAdmin", "Admin"].includes(currentRole)) return true;
+        if (currentRole !== "Coordinator") return false;
+        return !canManageItem(item);
     }
 
     function esc(s) {

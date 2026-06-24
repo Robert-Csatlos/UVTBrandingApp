@@ -397,6 +397,17 @@ def create_loan(db: Session, loan: schemas.LoanCreate, borrower_id: int | None =
     borrower = get_user_by_id(db, loan.user_id)
     if not borrower:
         raise HTTPException(status_code=404, detail="Borrower not found")
+    if borrower.role == "Coordinator":
+        owner_keys = {
+            str(borrower.full_name or "").strip().lower(),
+            str(borrower.email or "").strip().lower(),
+        }
+        item_owner = str(item.responsible_person or "").strip().lower()
+        if item_owner in owner_keys:
+            raise HTTPException(
+                status_code=400,
+                detail="Coordinators cannot loan their own assigned inventory items",
+            )
     if item.quantity < loan.quantity:
         raise HTTPException(status_code=400, detail=f"Only {item.quantity} units available")
 
