@@ -60,10 +60,14 @@ Seed users are defined in `seed_users.py`.
 
 | Role | Email | Password |
 |------|-------|----------|
-| SuperAdmin | `superadmin@e-uvt.ro` | `superadmin` |
-| Admin | `admin.dept@e-uvt.ro` | `admin1234` |
-| Coordinator | `coordinator@e-uvt.ro` | `coord1234` |
-| Vizualizator | `vizualizator@e-uvt.ro` | `viz123456` |
+| SuperAdmin | `superadmin@e-uvt.ro` | `SuperAdmin` |
+| Admin | `admin.dept@e-uvt.ro` | `Admin` |
+| Coordinator | `alexandru.muresan@e-uvt.ro` | `Coordinator` |
+| Coordinator | `ioana.popa@e-uvt.ro` | `Coordinator` |
+| Coordinator | `sandor.lozo@e-uvt.ro` | `Coordinator` |
+| Coordinator | `radu.marinescu@e-uvt.ro` | `Coordinator` |
+| Coordinator | `daria.stan@e-uvt.ro` | `Coordinator` |
+| Vizualizator | `vizualizator@e-uvt.ro` | `Vizualizator` |
 
 ---
 
@@ -136,10 +140,11 @@ The inventory UI includes a Variants popup that groups items by base code and sh
 - [x] Variants popup per item/base code
 - [x] QR code auto-generation
 - [x] Print QR code labels
-- [ ] Sortable table columns
-- [ ] Photo upload per material
+- [x] Sortable table columns
+- [x] Photo upload per material
+- [x] Inventory CSV export
+- [x] Material value field and value filters
 - [ ] Export to Excel/PDF
-- [ ] Material value field and value filters
 
 ### Loan Tracking
 

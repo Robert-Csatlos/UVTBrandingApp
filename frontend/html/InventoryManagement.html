@@ -14,18 +14,18 @@
             font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#0f172a);
             font-family:inherit; transition:border-color 0.2s, box-shadow 0.2s;
         }
-        .search-input:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
+        .search-input:focus { outline:none; border-color:#033A89; box-shadow:0 0 0 3px rgba(3,58,137,0.1); }
         .filter-select {
             padding:10px 14px; border:1.5px solid var(--border,#e2e8f0); border-radius:10px;
             font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#0f172a); cursor:pointer;
             font-family:inherit; transition:border-color 0.2s;
         }
-        .filter-select:focus { outline:none; border-color:#0057a8; }
+        .filter-select:focus { outline:none; border-color:#033A89; }
         .qty-filter {
             width:92px; padding:10px 12px; border:1.5px solid var(--border,#e2e8f0); border-radius:10px;
             font-size:14px; background:var(--card-bg,#fff); color:var(--text-color,#0f172a); font-family:inherit;
         }
-        .qty-filter:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
+        .qty-filter:focus { outline:none; border-color:#033A89; box-shadow:0 0 0 3px rgba(3,58,137,0.1); }
 
         /* ── Buttons ── */
         .btn {
@@ -34,12 +34,12 @@
         }
         .btn:hover { transform:translateY(-1px); box-shadow:0 4px 12px rgba(0,0,0,0.12); }
         .btn:active { transform:translateY(0); }
-        .btn-primary { background:linear-gradient(135deg,#0057a8,#0072d6); color:#fff; box-shadow:0 2px 8px rgba(0,87,168,0.25); }
+        .btn-primary { background:linear-gradient(135deg,#033A89,#2588E7); color:#fff; box-shadow:0 2px 8px rgba(3,58,137,0.25); }
         .btn-cancel  { background:var(--hover-bg,#f8fafc); color:var(--text-muted,#64748b); border:1px solid var(--border,#e2e8f0); }
         .btn-cancel:hover { background:var(--border,#e2e8f0); box-shadow:none; }
         .btn-danger  { background:#dc2626; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(220,38,38,0.2); }
-        .btn-edit    { background:#2563eb; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(37,99,235,0.2); }
-        .btn-loan    { background:linear-gradient(135deg,#0057a8,#0072d6); color:#fff; padding:6px 12px; font-size:12.5px; }
+        .btn-edit    { background:#2588E7; color:#fff; padding:6px 12px; font-size:12.5px; box-shadow:0 2px 6px rgba(37,136,231,0.2); }
+        .btn-loan    { background:linear-gradient(135deg,#033A89,#2588E7); color:#fff; padding:6px 12px; font-size:12.5px; }
         .btn-view    { background:var(--hover-bg,#f8fafc); color:var(--text-color,#0f172a); border:1px solid var(--border,#e2e8f0); padding:6px 12px; font-size:12.5px; }
         .btn-label   { background:#0f766e; color:#fff; padding:6px 12px; font-size:12.5px; }
 
@@ -59,9 +59,24 @@
             font-size:11px; font-weight:700;
             text-transform:uppercase; letter-spacing:0.08em;
         }
+        .inv-table th.sortable { cursor:pointer; user-select:none; }
+        .inv-table th.sortable:hover { background:var(--brand,#033A89); }
+        .sort-indicator { margin-left:5px; opacity:0.72; font-size:10px; }
         .inv-table tr:last-child td { border-bottom:none; }
         .inv-table tbody tr { transition:background 0.15s; }
         .inv-table tbody tr:hover td { background:var(--hover-bg,#f8fafc); }
+        .item-photo-thumb {
+            width:42px; height:42px; border-radius:8px; object-fit:cover;
+            border:1px solid var(--border,#e2e8f0); background:var(--hover-bg,#f8fafc);
+            display:block;
+        }
+        .item-photo-placeholder {
+            width:42px; height:42px; border-radius:8px;
+            display:flex; align-items:center; justify-content:center;
+            border:1px dashed var(--border,#e2e8f0);
+            color:var(--text-muted,#64748b); background:var(--hover-bg,#f8fafc);
+            font-size:18px;
+        }
 
         /* ── Badges ── */
         .status-badge {
@@ -97,7 +112,7 @@
             box-sizing:border-box; font-family:inherit; transition:border-color 0.2s, box-shadow 0.2s;
         }
         .form-group textarea { resize:vertical; min-height:70px; }
-        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#0057a8; box-shadow:0 0 0 3px rgba(0,87,168,0.1); }
+        .form-group input:focus, .form-group select:focus, .form-group textarea:focus { outline:none; border-color:#033A89; box-shadow:0 0 0 3px rgba(3,58,137,0.1); }
         .modal-actions { display:flex; gap:10px; justify-content:flex-end; margin-top:24px; }
         .error-msg { color:#dc2626; font-size:13px; margin-top:8px; font-weight:500; }
 
@@ -115,7 +130,7 @@
             padding:20px; text-align:center; cursor:pointer;
             transition:border-color 0.2s, background 0.2s;
         }
-        .photo-upload-area:hover { border-color:#0057a8; background:var(--hover-bg,#f8fafc); }
+        .photo-upload-area:hover { border-color:#033A89; background:var(--hover-bg,#f8fafc); }
         .photo-upload-area.has-photo { border-color:#059669; border-style:solid; background:rgba(5,150,105,0.04); }
         .photo-upload-area p { margin:6px 0 0; font-size:13px; color:var(--text-muted,#64748b); }
         .photo-preview { max-width:100%; max-height:140px; border-radius:8px; display:none; margin:8px auto 0; }
@@ -154,7 +169,7 @@
             .form-row { grid-template-columns:1fr; }
             .qty-filter { width:100%; }
             .inv-table th:nth-child(6), .inv-table td:nth-child(6),
-            .inv-table th:nth-child(7), .inv-table td:nth-child(7) { display:none; }
+            .inv-table th:nth-child(8), .inv-table td:nth-child(8) { display:none; }
         }
     </style>
 </head>
@@ -244,7 +259,10 @@
             </select>
             <input type="number" id="filter-min-qty" class="qty-filter" min="0" placeholder="Min qty" oninput="filterTable()">
             <input type="number" id="filter-max-qty" class="qty-filter" min="0" placeholder="Max qty" oninput="filterTable()">
+            <input type="number" id="filter-min-value" class="qty-filter" min="0" step="0.01" placeholder="Min lei" oninput="filterTable()">
+            <input type="number" id="filter-max-value" class="qty-filter" min="0" step="0.01" placeholder="Max lei" oninput="filterTable()">
             <button class="btn btn-cancel" onclick="clearFilters()">Clear</button>
+            <button class="btn btn-label" onclick="exportInventoryCSV()">Export CSV</button>
             <button id="add-btn" class="btn btn-primary" onclick="openAddModal()" style="display:none">
                 + Add Item
             </button>
@@ -254,18 +272,20 @@
             <table class="inv-table">
                 <thead>
                     <tr>
-                        <th>Code</th>
-                        <th>Name</th>
-                        <th>Category</th>
-                        <th>Qty</th>
-                        <th>Status</th>
-                        <th>Location</th>
-                        <th>Responsible</th>
+                        <th>Photo</th>
+                        <th class="sortable" onclick="setSort('inventory_code')">Code <span class="sort-indicator" data-sort-for="inventory_code"></span></th>
+                        <th class="sortable" onclick="setSort('name')">Name <span class="sort-indicator" data-sort-for="name"></span></th>
+                        <th class="sortable" onclick="setSort('category')">Category <span class="sort-indicator" data-sort-for="category"></span></th>
+                        <th class="sortable" onclick="setSort('quantity')">Qty <span class="sort-indicator" data-sort-for="quantity"></span></th>
+                        <th class="sortable" onclick="setSort('material_value')">Value <span class="sort-indicator" data-sort-for="material_value"></span></th>
+                        <th class="sortable" onclick="setSort('status')">Status <span class="sort-indicator" data-sort-for="status"></span></th>
+                        <th class="sortable" onclick="setSort('location')">Location <span class="sort-indicator" data-sort-for="location"></span></th>
+                        <th class="sortable" onclick="setSort('responsible_person')">Responsible <span class="sort-indicator" data-sort-for="responsible_person"></span></th>
                         <th>Actions</th>
                     </tr>
                 </thead>
                 <tbody id="inv-tbody">
-                    <tr><td colspan="8" style="text-align:center;color:#718096;">Loading...</td></tr>
+                    <tr><td colspan="10" style="text-align:center;color:#718096;">Loading...</td></tr>
                 </tbody>
             </table>
         </div>
@@ -308,6 +328,23 @@
             <div class="form-group">
                 <label>Location</label>
                 <input type="text" id="field-location" placeholder="Depozit A">
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>Material Value (lei)</label>
+                <input type="number" id="field-value" min="0" step="0.01" value="0">
+            </div>
+            <div class="form-group">
+                <label>Material Photo</label>
+                <div class="photo-upload-area" id="item-photo-area"
+                    onclick="document.getElementById('field-photo').click()">
+                    <span style="font-size:24px">Photo</span>
+                    <p id="item-photo-label">Click to upload material photo</p>
+                    <img id="item-photo-preview" class="photo-preview" alt="preview">
+                </div>
+                <input type="file" id="field-photo" accept="image/*"
+                    style="display:none" onchange="handleItemPhotoUpload(event)">
             </div>
         </div>
         <div class="form-group">
@@ -424,11 +461,17 @@
 <script>
     let currentRole    = null;
     let currentUserId  = null;
+    let currentUserName = "";
+    let currentUserEmail = "";
     let editingItemId  = null;
     let deletingItemId = null;
     let loaningItemId  = null;
     let loanPhotoBase64 = null;
+    let itemPhotoBase64 = null;
     let allItems = [];
+    let currentInventoryView = [];
+    let sortKey = "inventory_code";
+    let sortDirection = "asc";
 
     async function initPage() {
         try {
@@ -437,6 +480,8 @@
             const user = await res.json();
             currentRole   = user.role;
             currentUserId = user.id;
+            currentUserName = user.full_name || "";
+            currentUserEmail = user.email || "";
             applySidebar(user);
             applyRoleUI();
             await loadInventory();
@@ -470,7 +515,7 @@
 
     function applyRoleUI() {
         document.getElementById("add-btn").style.display =
-            ["SuperAdmin", "Admin"].includes(currentRole) ? "" : "none";
+            ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole) ? "" : "none";
     }
 
     async function loadInventory() {
@@ -483,7 +528,7 @@
             filterTable();
         } catch (_) {
             document.getElementById("inv-tbody").innerHTML =
-                '<tr><td colspan="8" style="text-align:center;color:#e53e3e;">Failed to load inventory.</td></tr>';
+                '<tr><td colspan="10" style="text-align:center;color:#e53e3e;">Failed to load inventory.</td></tr>';
         }
     }
 
@@ -520,6 +565,8 @@
         document.getElementById("filter-location").value = "";
         document.getElementById("filter-min-qty").value = "";
         document.getElementById("filter-max-qty").value = "";
+        document.getElementById("filter-min-value").value = "";
+        document.getElementById("filter-max-value").value = "";
         filterTable();
     }
 
@@ -530,8 +577,12 @@
         const lf = document.getElementById("filter-location").value;
         const minQtyRaw = document.getElementById("filter-min-qty").value;
         const maxQtyRaw = document.getElementById("filter-max-qty").value;
+        const minValueRaw = document.getElementById("filter-min-value").value;
+        const maxValueRaw = document.getElementById("filter-max-value").value;
         const minQty = minQtyRaw === "" ? null : Number(minQtyRaw);
         const maxQty = maxQtyRaw === "" ? null : Number(maxQtyRaw);
+        const minValue = minValueRaw === "" ? null : Number(minValueRaw);
+        const maxValue = maxValueRaw === "" ? null : Number(maxValueRaw);
         const filtered = allItems.filter(item =>
             (!q || item.name.toLowerCase().includes(q) ||
                    item.inventory_code.toLowerCase().includes(q) ||
@@ -542,22 +593,25 @@
             (!cf || item.category === cf) &&
             (!lf || item.location === lf) &&
             (minQty === null || Number(item.quantity || 0) >= minQty) &&
-            (maxQty === null || Number(item.quantity || 0) <= maxQty)
+            (maxQty === null || Number(item.quantity || 0) <= maxQty) &&
+            (minValue === null || Number(item.material_value || 0) >= minValue) &&
+            (maxValue === null || Number(item.material_value || 0) <= maxValue)
         );
-        renderTable(filtered);
+        currentInventoryView = sortItems(filtered);
+        renderTable(currentInventoryView);
     }
 
     function renderTable(items) {
         const tbody = document.getElementById("inv-tbody");
+        updateSortIndicators();
         if (!items.length) {
-            tbody.innerHTML = `<tr><td colspan="8" style="text-align:center;color:#718096;">No items found.</td></tr>`;
+            tbody.innerHTML = `<tr><td colspan="10" style="text-align:center;color:#718096;">No items found.</td></tr>`;
             return;
         }
 
         // SuperAdmin / Admin → Edit + Delete + Loan
         // Coordinator        → Edit + Loan
         // Vizualizator       → variants/details only
-        const canEdit   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
         const canDelete = ["SuperAdmin", "Admin"].includes(currentRole);
         const canLoan   = ["SuperAdmin", "Admin", "Coordinator"].includes(currentRole);
 
@@ -565,17 +619,19 @@
 
         tbody.innerHTML = items.map(item => `
             <tr>
+                <td>${renderItemPhoto(item)}</td>
                 <td><code style="font-size:12px;background:var(--hover-bg,#f0f4f8);padding:2px 6px;border-radius:4px;">${esc(item.inventory_code)}</code></td>
                 <td>${esc(item.name)}</td>
                 <td>${esc(item.category)}</td>
                 <td>${item.quantity}</td>
+                <td>${formatMoney(item.material_value)}</td>
                 <td><span class="status-badge status-${item.status}">${statusMap[item.status] || item.status}</span></td>
                 <td>${esc(item.location)}</td>
                 <td>${esc(item.responsible_person)}</td>
                 <td style="white-space:nowrap;">
                     <button class="btn btn-label" onclick="printItemLabel(${item.id})">Label</button>
                     <button class="btn btn-view" onclick="openVariantsModal(${item.id})">Variants</button>
-                    ${canEdit   ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>` : ""}
+                    ${canManageItem(item) ? `<button class="btn btn-edit"   onclick="openEditModal(${item.id})">Edit</button>` : ""}
                     ${canDelete ? `<button class="btn btn-danger" onclick="askDelete(${item.id})" style="margin-left:6px;">Delete</button>` : ""}
                     ${canLoan   ? `<button class="btn btn-loan"   onclick="openLoanModal(${item.id})">📦 Loan</button>` : ""}
                 </td>
@@ -583,10 +639,98 @@
         `).join("");
     }
 
+    function canManageItem(item) {
+        if (["SuperAdmin", "Admin"].includes(currentRole)) return true;
+        if (currentRole !== "Coordinator") return false;
+        const owner = String(item.responsible_person || "").trim().toLowerCase();
+        return owner === String(currentUserName || "").trim().toLowerCase()
+            || owner === String(currentUserEmail || "").trim().toLowerCase();
+    }
+
     function esc(s) {
         return String(s ?? "")
             .replace(/&/g,"&amp;").replace(/</g,"&lt;")
             .replace(/>/g,"&gt;").replace(/"/g,"&quot;");
+    }
+
+    function setSort(key) {
+        if (sortKey === key) {
+            sortDirection = sortDirection === "asc" ? "desc" : "asc";
+        } else {
+            sortKey = key;
+            sortDirection = "asc";
+        }
+        filterTable();
+    }
+
+    function sortItems(items) {
+        const numericKeys = new Set(["quantity", "material_value"]);
+        return [...items].sort((a, b) => {
+            const av = a[sortKey] ?? "";
+            const bv = b[sortKey] ?? "";
+            let result;
+            if (numericKeys.has(sortKey)) {
+                result = Number(av || 0) - Number(bv || 0);
+            } else {
+                result = String(av).localeCompare(String(bv), undefined, { sensitivity: "base", numeric: true });
+            }
+            return sortDirection === "asc" ? result : -result;
+        });
+    }
+
+    function updateSortIndicators() {
+        document.querySelectorAll(".sort-indicator").forEach(el => {
+            el.textContent = el.dataset.sortFor === sortKey
+                ? (sortDirection === "asc" ? "up" : "down")
+                : "";
+        });
+    }
+
+    function formatMoney(value) {
+        const amount = Number(value || 0);
+        return amount ? `${amount.toFixed(2)} lei` : "0.00 lei";
+    }
+
+    function hasUsablePhoto(path) {
+        return !!path && path !== "pending.jpg" && path !== "pending.png";
+    }
+
+    function renderItemPhoto(item) {
+        if (hasUsablePhoto(item.photo_path)) {
+            return `<img class="item-photo-thumb" src="${esc(item.photo_path)}" alt="${esc(item.name)} photo">`;
+        }
+        return `<div class="item-photo-placeholder" title="No material photo">Photo</div>`;
+    }
+
+    function exportInventoryCSV() {
+        const rows = [
+            ["Code", "Name", "Category", "Quantity", "Value lei", "Status", "Location", "Responsible"],
+            ...currentInventoryView.map(item => [
+                item.inventory_code,
+                item.name,
+                item.category,
+                item.quantity,
+                Number(item.material_value || 0).toFixed(2),
+                conditionLabel(item.status),
+                item.location,
+                item.responsible_person,
+            ]),
+        ];
+        const csv = rows.map(row => row.map(csvCell).join(",")).join("\n");
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `uvt-inventory-${new Date().toISOString().slice(0, 10)}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+    }
+
+    function csvCell(value) {
+        const text = String(value ?? "");
+        return /[",\n]/.test(text) ? `"${text.replace(/"/g, '""')}"` : text;
     }
 
     function baseInventoryCode(code) {
@@ -600,12 +744,16 @@
     // ── Add / Edit Modal ───────────────────────────────────────────────
     function openAddModal() {
         editingItemId = null;
+        itemPhotoBase64 = null;
         document.getElementById("modal-title").textContent = "Add Inventory Item";
         document.getElementById("modal-submit-btn").textContent = "Create";
         ["field-name","field-category","field-code","field-location","field-responsible"]
             .forEach(id => document.getElementById(id).value = "");
         document.getElementById("field-qty").value    = "1";
+        document.getElementById("field-value").value  = "0";
         document.getElementById("field-status").value = "new";
+        configureResponsibleField(null);
+        resetItemPhotoInput();
         document.getElementById("modal-error").textContent = "";
         document.getElementById("item-modal").classList.add("open");
     }
@@ -614,26 +762,75 @@
         const item = allItems.find(i => i.id === id);
         if (!item) return;
         editingItemId = id;
+        itemPhotoBase64 = hasUsablePhoto(item.photo_path) ? item.photo_path : null;
         document.getElementById("modal-title").textContent = "Edit Inventory Item";
         document.getElementById("modal-submit-btn").textContent = "Save";
         document.getElementById("field-name").value        = item.name;
         document.getElementById("field-category").value    = item.category;
         document.getElementById("field-code").value        = baseInventoryCode(item.inventory_code);
         document.getElementById("field-qty").value         = item.quantity;
+        document.getElementById("field-value").value       = Number(item.material_value || 0);
         document.getElementById("field-status").value      = item.status;
         document.getElementById("field-location").value    = item.location;
         document.getElementById("field-responsible").value = item.responsible_person;
+        configureResponsibleField(item);
+        setItemPhotoPreview(itemPhotoBase64, itemPhotoBase64 ? "Current material photo" : "Click to upload material photo");
         document.getElementById("modal-error").textContent = "";
         document.getElementById("item-modal").classList.add("open");
     }
 
     function closeModal() { document.getElementById("item-modal").classList.remove("open"); }
 
+    function configureResponsibleField(item) {
+        const field = document.getElementById("field-responsible");
+        if (currentRole === "Coordinator") {
+            field.value = item ? item.responsible_person : (currentUserName || currentUserEmail);
+            field.readOnly = true;
+            field.title = "Coordinators can only assign items to themselves.";
+        } else {
+            field.readOnly = false;
+            field.title = "";
+        }
+    }
+
+    function resetItemPhotoInput() {
+        itemPhotoBase64 = null;
+        document.getElementById("field-photo").value = "";
+        setItemPhotoPreview(null, "Click to upload material photo");
+    }
+
+    function setItemPhotoPreview(src, label) {
+        const preview = document.getElementById("item-photo-preview");
+        const area = document.getElementById("item-photo-area");
+        document.getElementById("item-photo-label").textContent = label;
+        if (src) {
+            preview.src = src;
+            preview.style.display = "block";
+            area.classList.add("has-photo");
+        } else {
+            preview.removeAttribute("src");
+            preview.style.display = "none";
+            area.classList.remove("has-photo");
+        }
+    }
+
+    function handleItemPhotoUpload(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => {
+            itemPhotoBase64 = e.target.result;
+            setItemPhotoPreview(itemPhotoBase64, file.name);
+        };
+        reader.readAsDataURL(file);
+    }
+
     async function submitModal() {
         const name        = document.getElementById("field-name").value.trim();
         const category    = document.getElementById("field-category").value.trim();
         const code        = document.getElementById("field-code").value.trim();
         const qty         = parseInt(document.getElementById("field-qty").value, 10);
+        const value       = Number(document.getElementById("field-value").value || 0);
         const status      = document.getElementById("field-status").value;
         const location    = document.getElementById("field-location").value.trim();
         const responsible = document.getElementById("field-responsible").value.trim();
@@ -646,8 +843,11 @@
         if (isNaN(qty) || qty < 0) {
             errEl.textContent = "Quantity must be ≥ 0."; return;
         }
+        if (Number.isNaN(value) || value < 0) {
+            errEl.textContent = "Material value must be at least 0."; return;
+        }
 
-        const body   = { name, category, inventory_code: code, quantity: qty, status, location, responsible_person: responsible };
+        const body   = { name, category, inventory_code: code, quantity: qty, status, location, responsible_person: responsible, material_value: value, photo_path: itemPhotoBase64 };
         const url    = editingItemId === null ? "/inventory/" : `/inventory/${editingItemId}`;
         const method = editingItemId === null ? "POST" : "PUT";
 
@@ -728,7 +928,7 @@
                         .qr { width:30mm; height:30mm; object-fit:contain; flex-shrink:0; }
                         .fallback { width:30mm; height:30mm; border:1px dashed #94a3b8; display:flex; align-items:center; justify-content:center; font-size:9px; color:#64748b; text-align:center; }
                         .meta { min-width:0; }
-                        .eyebrow { font-size:8px; font-weight:700; letter-spacing:1px; color:#0057a8; text-transform:uppercase; margin-bottom:3px; }
+                        .eyebrow { font-size:8px; font-weight:700; letter-spacing:1px; color:#033A89; text-transform:uppercase; margin-bottom:3px; }
                         h1 { font-size:15px; line-height:1.15; margin:0 0 4px; }
                         .code { font-size:13px; font-weight:800; background:#e0f2fe; color:#075985; padding:2px 5px; border-radius:4px; display:inline-block; margin-bottom:4px; }
                         .line { font-size:10px; line-height:1.35; color:#334155; }

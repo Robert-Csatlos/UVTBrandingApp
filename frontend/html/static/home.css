@@ -5,21 +5,23 @@
 /* ── 1. Design Tokens ─────────────────────────────────────────── */
 :root {
     /* Brand */
-    --brand:        #0057a8;
-    --brand-dark:   #003d7a;
-    --brand-light:  #dbeafe;
+    --brand:        #033A89;
+    --brand-dark:   #121212;
+    --brand-sky:    #2588E7;
+    --brand-light:  #AED9F8;
+    --brand-soft:   #FCF5F7;
 
     /* Backgrounds */
-    --bg-color:     #eef2f7;
+    --bg-color:     #f6f9fd;
     --card-bg:      #ffffff;
 
     /* Text */
-    --text-color:   #0f172a;
+    --text-color:   #121212;
     --text-muted:   #64748b;
     --sidebar-text: #e2e8f0;
 
     /* Sidebar (also used by table headers in inline styles) */
-    --sidebar-bg:   #0c1e3c;
+    --sidebar-bg:   #033A89;
 
     /* Surfaces */
     --border:       #e2e8f0;
@@ -50,7 +52,7 @@
     --radius-xs: 6px;
 
     /* Compat alias */
-    --accent-color: #0057a8;
+    --accent-color: #033A89;
     --card-border:  rgba(0,0,0,0.06);
 }
 
@@ -78,7 +80,7 @@
 body {
     background: var(--bg-color);
     color: var(--text-color);
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: "Helvetica Now Display", "Helvetica Neue", Arial, system-ui, sans-serif;
     transition: background-color 0.3s ease, color 0.3s ease;
     min-height: 100vh;
     font-size: 14px;
@@ -96,7 +98,7 @@ body {
 /* ── 4. Sidebar ───────────────────────────────────────────────── */
 .sidebar {
     width: var(--sidebar-width);
-    background: linear-gradient(175deg, #0a1a38 0%, #0d2048 45%, #0a1a38 100%);
+    background: linear-gradient(180deg, #033A89 0%, #052f6d 58%, #121212 100%);
     color: var(--sidebar-text);
     display: flex;
     flex-direction: column;
@@ -137,7 +139,7 @@ body {
     border: 1px solid rgba(226,232,240,0.14);
     border-radius: 8px;
     background: rgba(255,255,255,0.045);
-    color: rgba(226,232,240,0.86);
+    color: #ffffff;
     font-size: 0.69rem;
     font-weight: 800;
     line-height: 1.25;
@@ -183,13 +185,13 @@ body {
 .nav-item:hover {
     background: rgba(255,255,255,0.07);
     color: #fff;
-    border-left-color: rgba(99,157,255,0.45);
+    border-left-color: #AED9F8;
 }
 
 .nav-item.active {
-    background: rgba(79,142,247,0.15);
+    background: rgba(174,217,248,0.16);
     color: #fff;
-    border-left-color: #4f8ef7;
+    border-left-color: #AED9F8;
     font-weight: 600;
 }
 
@@ -231,13 +233,13 @@ body {
 .user-avatar {
     width: 36px; height: 36px;
     border-radius: 10px;
-    background: linear-gradient(135deg, #4f8ef7 0%, #0057a8 100%);
+    background: linear-gradient(135deg, #2588E7 0%, #033A89 100%);
     display: flex; align-items: center; justify-content: center;
     font-weight: 700;
     font-size: 0.78rem;
     color: white;
     flex-shrink: 0;
-    box-shadow: 0 2px 8px rgba(79,142,247,0.4);
+    box-shadow: 0 2px 8px rgba(37,136,231,0.38);
     letter-spacing: 0.03em;
 }
 

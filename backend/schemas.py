@@ -35,6 +35,8 @@ class InventoryBase(BaseModel):
     status: InventoryStatus
     location: str
     responsible_person: str
+    material_value: float = Field(default=0, ge=0)
+    photo_path: Optional[str] = None
 
 
 class InventoryCreate(InventoryBase):
@@ -43,7 +45,6 @@ class InventoryCreate(InventoryBase):
 
 class Inventory(InventoryBase):
     id: int
-    photo_path: Optional[str] = None
     qr_code_path: Optional[str] = None
 
     class Config:
@@ -58,6 +59,8 @@ class InventoryUpdate(BaseModel):
     status: Optional[InventoryStatus] = None
     location: Optional[str] = None
     responsible_person: Optional[str] = None
+    material_value: Optional[float] = Field(default=None, ge=0)
+    photo_path: Optional[str] = None
 
 
 # --- USER SCHEMAS ---

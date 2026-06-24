@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Session, aliased
-from sqlalchemy import func
+from sqlalchemy import func, text
 from fastapi import HTTPException
 from . import models, schemas
 from .auth import get_password_hash
@@ -38,6 +38,17 @@ CONDITION_ALIASES = {
 }
 
 QR_IMAGE_DIR = Path("images/qrcodes")
+
+
+def ensure_inventory_schema(db: Session):
+    """Add lightweight SQLite columns needed by newer inventory features."""
+    columns = {
+        row[1]
+        for row in db.execute(text("PRAGMA table_info(inventory)")).fetchall()
+    }
+    if "material_value" not in columns:
+        db.execute(text("ALTER TABLE inventory ADD COLUMN material_value FLOAT DEFAULT 0"))
+        db.commit()
 
 
 def normalize_condition(condition) -> str:
@@ -82,6 +93,7 @@ def get_or_create_condition_variant(db: Session, source_item: models.Inventory, 
         status=status,
         location=source_item.location,
         responsible_person=source_item.responsible_person,
+        material_value=source_item.material_value or 0,
         photo_path=source_item.photo_path,
         qr_code_path=None,
     )
@@ -168,6 +180,7 @@ def create_inventory(db: Session, item: schemas.InventoryCreate):
     data = item.model_dump()
     data["status"] = normalize_condition(data["status"])
     data["inventory_code"] = get_variant_inventory_code(data["inventory_code"], data["status"])
+    data["material_value"] = data.get("material_value") or 0
 
     existing = db.query(models.Inventory).filter(
         models.Inventory.inventory_code == data["inventory_code"]
@@ -179,18 +192,33 @@ def create_inventory(db: Session, item: schemas.InventoryCreate):
         existing.status = data["status"]
         existing.location = data["location"]
         existing.responsible_person = data["responsible_person"]
+        existing.material_value = data["material_value"]
+        if data.get("photo_path"):
+            existing.photo_path = data["photo_path"]
         generate_inventory_qr_code(existing)
         db.commit()
         db.refresh(existing)
         return existing
 
-    db_item = models.Inventory(**data, photo_path="pending.jpg", qr_code_path=None)
+    db_item = models.Inventory(**data, qr_code_path=None)
     db.add(db_item)
     db.flush()
     generate_inventory_qr_code(db_item)
     db.commit()
     db.refresh(db_item)
     return db_item
+
+
+def create_inventory_for_user(
+    db: Session,
+    item: schemas.InventoryCreate,
+    current_user: models.User,
+):
+    if current_user.role == "Coordinator":
+        item = item.model_copy(update={
+            "responsible_person": current_user.full_name or current_user.email
+        })
+    return create_inventory(db, item)
 
 
 def get_all_inventory(db: Session):
@@ -225,6 +253,32 @@ def update_inventory(db: Session, item_id: int, update: schemas.InventoryUpdate)
     db.commit()
     db.refresh(item)
     return item
+
+
+def update_inventory_for_user(
+    db: Session,
+    item_id: int,
+    update: schemas.InventoryUpdate,
+    current_user: models.User,
+):
+    item = get_inventory_by_id(db, item_id)
+    if not item:
+        raise HTTPException(status_code=404, detail="Item not found")
+
+    if current_user.role == "Coordinator":
+        owner_keys = {
+            str(current_user.full_name or "").strip().lower(),
+            str(current_user.email or "").strip().lower(),
+        }
+        item_owner = str(item.responsible_person or "").strip().lower()
+        if item_owner not in owner_keys:
+            raise HTTPException(
+                status_code=403,
+                detail="Coordinators can edit only their assigned inventory items",
+            )
+        update = update.model_copy(update={"responsible_person": item.responsible_person})
+
+    return update_inventory(db, item_id, update)
 
 
 def delete_inventory(db: Session, item_id: int):

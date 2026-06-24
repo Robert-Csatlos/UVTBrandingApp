@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean
+from sqlalchemy import Column, Integer, String, ForeignKey, DateTime, Boolean, Float
 from .database import Base
 import datetime
 
@@ -14,6 +14,7 @@ class Inventory(Base):
     status = Column(String, nullable=False)
     location = Column(String, nullable=False)
     responsible_person = Column(String, nullable=False)
+    material_value = Column(Float, default=0.0)
     photo_path = Column(String, nullable=True)
     qr_code_path = Column(String, nullable=True)
 

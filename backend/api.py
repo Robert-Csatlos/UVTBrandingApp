@@ -20,6 +20,7 @@ from .reports import router as reports_router
 
 models.Base.metadata.create_all(bind=engine)
 with SessionLocal() as db:
+    crud.ensure_inventory_schema(db)
     crud.migrate_inventory_variant_codes(db)
     crud.ensure_inventory_qr_codes(db)
 
@@ -151,9 +152,9 @@ def get_me(current_user: models.User = Depends(get_current_user)):
 def add_item(
     item: schemas.InventoryCreate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_admin_or_above),
+    current_user: models.User = Depends(require_coordinator_or_above),
 ):
-    return crud.create_inventory(db, item)
+    return crud.create_inventory_for_user(db, item, current_user)
 
 
 @app.get("/inventory/", response_model=list[schemas.Inventory])
@@ -199,9 +200,9 @@ def update_item(
     item_id: int,
     update: schemas.InventoryUpdate,
     db: Session = Depends(get_db),
-    _: models.User = Depends(require_coordinator_or_above),
+    current_user: models.User = Depends(require_coordinator_or_above),
 ):
-    return crud.update_inventory(db, item_id, update)
+    return crud.update_inventory_for_user(db, item_id, update, current_user)
 
 
 @app.delete("/inventory/{item_id}")

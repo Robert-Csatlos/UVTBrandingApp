@@ -3,9 +3,12 @@
    ═══════════════════════════════════════════════════════════════ */
 
 :root {
-    --accent:  #0057a8;
+    --accent:  #033A89;
+    --accent-sky: #2588E7;
+    --accent-light: #AED9F8;
+    --soft-bg: #FCF5F7;
     --card-bg: #ffffff;
-    --text:    #0f172a;
+    --text:    #121212;
     --muted:   #64748b;
     --border:  #e2e8f0;
     --input-bg:#f8fafc;
@@ -28,55 +31,36 @@ body {
     align-items: center;
     justify-content: center;
     padding: 20px;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: "Helvetica Now Display", "Helvetica Neue", Arial, system-ui, sans-serif;
     -webkit-font-smoothing: antialiased;
     position: relative;
     overflow: hidden;
-    /* Rich deep navy background */
-    background: #060e20;
+    background:
+        linear-gradient(135deg, rgba(3,58,137,0.94), rgba(18,18,18,0.96)),
+        var(--accent);
     transition: background 0.3s;
 }
 
-/* Animated gradient orbs */
 body::before {
     content: '';
     position: fixed;
-    top: -25%;
-    right: -15%;
-    width: 700px;
-    height: 700px;
-    border-radius: 50%;
-    background: radial-gradient(circle at center,
-        rgba(0, 87, 168, 0.25) 0%,
-        rgba(0, 87, 168, 0.08) 45%,
-        transparent 70%);
-    animation: orb1 18s ease-in-out infinite;
+    inset: 0;
+    background:
+        linear-gradient(90deg, rgba(255,255,255,0.045) 1px, transparent 1px),
+        linear-gradient(0deg, rgba(255,255,255,0.035) 1px, transparent 1px);
+    background-size: 48px 48px;
     pointer-events: none;
 }
 
 body::after {
     content: '';
     position: fixed;
-    bottom: -20%;
-    left: -15%;
-    width: 600px;
-    height: 600px;
-    border-radius: 50%;
-    background: radial-gradient(circle at center,
-        rgba(79, 142, 247, 0.15) 0%,
-        rgba(79, 142, 247, 0.04) 50%,
-        transparent 70%);
-    animation: orb2 22s ease-in-out infinite;
+    left: 0;
+    right: 0;
+    top: 0;
+    height: 8px;
+    background: linear-gradient(90deg, #033A89, #2588E7, #AED9F8);
     pointer-events: none;
-}
-
-@keyframes orb1 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50%       { transform: translate(-40px, 30px) scale(1.05); }
-}
-@keyframes orb2 {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    50%       { transform: translate(30px, -40px) scale(1.08); }
 }
 
 /* Subtle grid overlay */
@@ -143,8 +127,8 @@ body > .grid-bg {
     padding: 5px 10px;
     margin-bottom: 14px;
     border-radius: 999px;
-    background: rgba(0,87,168,0.08);
-    border: 1px solid rgba(0,87,168,0.16);
+    background: rgba(3,58,137,0.08);
+    border: 1px solid rgba(3,58,137,0.16);
     color: var(--accent);
     font-size: 0.68rem;
     font-weight: 800;
@@ -218,7 +202,7 @@ p {
 .input-group input:focus {
     border-color: var(--accent);
     background: var(--card-bg);
-    box-shadow: 0 0 0 3px rgba(0,87,168,0.12);
+    box-shadow: 0 0 0 3px rgba(3,58,137,0.12);
 }
 
 .input-group input::placeholder { color: #94a3b8; }
@@ -248,30 +232,30 @@ button:active { transform: translateY(0); }
 
 /* Main login trigger */
 .login-main-btn {
-    background: linear-gradient(135deg, #0057a8 0%, #0072d6 100%);
+    background: linear-gradient(135deg, #033A89 0%, #2588E7 100%);
     color: white;
     padding: 14px 56px;
     font-size: 0.95rem;
     font-weight: 700;
     border-radius: 12px;
-    box-shadow: 0 4px 20px rgba(0,87,168,0.38);
+    box-shadow: 0 4px 20px rgba(3,58,137,0.38);
     margin-top: 6px;
     display: inline-block;
 }
 .login-main-btn:hover {
-    box-shadow: 0 8px 28px rgba(0,87,168,0.55);
+    box-shadow: 0 8px 28px rgba(3,58,137,0.48);
     filter: brightness(1.06);
 }
 
 /* Submit */
 .login-submit {
     width: 100%;
-    background: linear-gradient(135deg, #0057a8 0%, #0072d6 100%);
+    background: linear-gradient(135deg, #033A89 0%, #2588E7 100%);
     color: white;
-    box-shadow: 0 4px 16px rgba(0,87,168,0.3);
+    box-shadow: 0 4px 16px rgba(3,58,137,0.3);
 }
 .login-submit:hover {
-    box-shadow: 0 6px 22px rgba(0,87,168,0.48);
+    box-shadow: 0 6px 22px rgba(3,58,137,0.42);
     filter: brightness(1.07);
 }
 
@@ -280,12 +264,12 @@ button:active { transform: translateY(0); }
     width: 100%;
     background: transparent;
     color: var(--accent);
-    border: 1.5px solid rgba(0,87,168,0.28);
+    border: 1.5px solid rgba(3,58,137,0.28);
     font-weight: 600;
 }
 .uvt-btn:hover {
-    background: rgba(0,87,168,0.06);
-    border-color: rgba(0,87,168,0.5);
+    background: rgba(3,58,137,0.06);
+    border-color: rgba(3,58,137,0.5);
 }
 
 /* Back link */

@@ -12,25 +12,49 @@ models.Base.metadata.create_all(bind=engine)
 SAMPLE_USERS = [
     {
         "email":     "superadmin@e-uvt.ro",
-        "password":  "superadmin",
-        "full_name": "Ion Popescu",
+        "password":  "SuperAdmin",
+        "full_name": "Elena Dumitrescu",
         "role":      "SuperAdmin",
     },
     {
         "email":     "admin.dept@e-uvt.ro",
-        "password":  "admin1234",
+        "password":  "Admin",
         "full_name": "Maria Ionescu",
         "role":      "Admin",
     },
     {
-        "email":     "coordinator@e-uvt.ro",
-        "password":  "coord1234",
+        "email":     "alexandru.muresan@e-uvt.ro",
+        "password":  "Coordinator",
         "full_name": "Alexandru Muresan",
         "role":      "Coordinator",
     },
     {
+        "email":     "ioana.popa@e-uvt.ro",
+        "password":  "Coordinator",
+        "full_name": "Ioana Popa",
+        "role":      "Coordinator",
+    },
+    {
+        "email":     "sandor.lozo@e-uvt.ro",
+        "password":  "Coordinator",
+        "full_name": "Sandor Rober-Lozo",
+        "role":      "Coordinator",
+    },
+    {
+        "email":     "radu.marinescu@e-uvt.ro",
+        "password":  "Coordinator",
+        "full_name": "Radu Marinescu",
+        "role":      "Coordinator",
+    },
+    {
+        "email":     "daria.stan@e-uvt.ro",
+        "password":  "Coordinator",
+        "full_name": "Daria Stan",
+        "role":      "Coordinator",
+    },
+    {
         "email":     "vizualizator@e-uvt.ro",
-        "password":  "viz123456",
+        "password":  "Vizualizator",
         "full_name": "Ana Munteanu",
         "role":      "Vizualizator",
     },
@@ -63,7 +87,7 @@ SAMPLE_INVENTORY = [
         "quantity": 6,
         "status": "new",
         "location": "Sala Evenimente",
-        "responsible_person": "Maria Ionescu",
+        "responsible_person": "Sandor Rober-Lozo",
     },
     # Flags / Steaguri
     {
@@ -82,7 +106,7 @@ SAMPLE_INVENTORY = [
         "quantity": 3,
         "status": "good",
         "location": "Curtea UVT",
-        "responsible_person": "Ion Popescu",
+        "responsible_person": "Radu Marinescu",
     },
     # Promotional items / Materiale promotionale
     {
@@ -92,7 +116,7 @@ SAMPLE_INVENTORY = [
         "quantity": 150,
         "status": "new",
         "location": "Depozit Rectorat",
-        "responsible_person": "Maria Ionescu",
+        "responsible_person": "Sandor Rober-Lozo",
     },
     {
         "name": "Pix Inscriptionat UVT",
@@ -101,7 +125,7 @@ SAMPLE_INVENTORY = [
         "quantity": 500,
         "status": "new",
         "location": "Depozit Rectorat",
-        "responsible_person": "Maria Ionescu",
+        "responsible_person": "Sandor Rober-Lozo",
     },
     {
         "name": "Tricou UVT (M)",
@@ -128,7 +152,7 @@ SAMPLE_INVENTORY = [
         "quantity": 200,
         "status": "new",
         "location": "Depozit Rectorat",
-        "responsible_person": "Maria Ionescu",
+        "responsible_person": "Sandor Rober-Lozo",
     },
     # AV / Tech equipment
     {
@@ -156,7 +180,7 @@ SAMPLE_INVENTORY = [
         "quantity": 8,
         "status": "good",
         "location": "Sala Conferinte A",
-        "responsible_person": "Ana Munteanu",
+        "responsible_person": "Daria Stan",
     },
     {
         "name": "Stativ Microfon",
@@ -165,7 +189,7 @@ SAMPLE_INVENTORY = [
         "quantity": 6,
         "status": "worn",
         "location": "Depozit Central",
-        "responsible_person": "Ana Munteanu",
+        "responsible_person": "Daria Stan",
     },
     # Furniture / Mobilier
     {
@@ -193,7 +217,7 @@ SAMPLE_INVENTORY = [
         "quantity": 2,
         "status": "new",
         "location": "Sala Conferinte A",
-        "responsible_person": "Ion Popescu",
+        "responsible_person": "Radu Marinescu",
     },
 ]
 
